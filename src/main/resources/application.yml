@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: massivas-service
+  jackson:
+    time-zone: America/Sao_Paulo
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+          issuer-uri: https://accounts.google.com
+  mvc:
+    async:
+      request-timeout: 600000
+  # Esqueleto: removido quando os repositorios do dominio forem movidos (specs/API_GATEWAY_PASSOS.md, fase 3).
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+server:
+  port: ${SERVER_PORT:8101}
+  tomcat:
+    connection-timeout: 600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
