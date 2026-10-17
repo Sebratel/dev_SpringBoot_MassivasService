@@ -7,13 +7,24 @@ services:
     pull_policy: always
     container_name: massivas-service-stage
     restart: unless-stopped
-    mem_limit: 512m
+    mem_limit: 768m
     networks:
       - proxy
     environment:
       - SERVER_PORT=8101
       - APP_ENV=staging
       - TZ=America/Sao_Paulo
+      - ERP_DB_URL=${ERP_DB_URL}
+      - ERP_DB_USER=${ERP_DB_USER}
+      - ERP_DB_PASS=${ERP_DB_PASS}
+      - AFETADOS_DB_URL=${AFETADOS_DB_URL}
+      - AFETADOS_DB_USER=${AFETADOS_DB_USER}
+      - AFETADOS_DB_PASS=${AFETADOS_DB_PASS}
+      - ELLEVEN_CLIENT_ID=${ELLEVEN_CLIENT_ID:-}
+      - ELLEVEN_CLIENT_SECRET=${ELLEVEN_CLIENT_SECRET:-}
+      - ELLEVEN_CLIENT_SYNDATA=${ELLEVEN_CLIENT_SYNDATA:-}
+      - ELLEVEN_CLIENT_GRANT_TYPE=${ELLEVEN_CLIENT_GRANT_TYPE:-}
+      - ELLEVEN_CLIENT_SCOPE=${ELLEVEN_CLIENT_SCOPE:-}
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8101'"]
       interval: 30s

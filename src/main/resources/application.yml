@@ -12,11 +12,20 @@ spring:
   mvc:
     async:
       request-timeout: 600000
-  # Esqueleto: removido quando os repositorios do dominio forem movidos (specs/API_GATEWAY_PASSOS.md, fase 3).
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  datasource:
+    afetados:
+      url: ${AFETADOS_DB_URL}
+      username: ${AFETADOS_DB_USER}
+      password: ${AFETADOS_DB_PASS}
+      driver-class-name: org.mariadb.jdbc.Driver
+    erp:
+      url: ${ERP_DB_URL}
+      username: ${ERP_DB_USER}
+      password: ${ERP_DB_PASS}
+      driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: ${SHOW_SQL:false}
 
 server:
   port: ${SERVER_PORT:8101}
@@ -28,3 +37,10 @@ management:
     web:
       exposure:
         include: health,info
+
+elleven:
+  client-id: ${ELLEVEN_CLIENT_ID:}
+  client-secret: ${ELLEVEN_CLIENT_SECRET:}
+  syndata: ${ELLEVEN_CLIENT_SYNDATA:}
+  grant-type: ${ELLEVEN_CLIENT_GRANT_TYPE:}
+  scope: ${ELLEVEN_CLIENT_SCOPE:}

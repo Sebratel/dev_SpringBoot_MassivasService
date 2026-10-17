@@ -122,3 +122,9 @@ do `Dockerfile` (multi-stage, Temurin 21, usuário não-root) e publicada no GHC
 passa de 90 s, e o proxy do stage derruba a requisição de deploy. O `sebratel-java-parent` é construído da fonte pública na própria imagem, sem token.
 
 O branch `staging` recebe o código mais atualizado: `main` → `staging` antes de cada deploy.
+
+## Estado da migração
+
+O código dos endpoints deste serviço **já foi movido** do BFF original (`dev_SpringBoot_APIGateway`) para cá: controllers, services, repositórios e testes, com a mesma resposta (o contrato fica em `contract/routes.json`). O gateway roteia estas rotas para este serviço.
+
+Variáveis de ambiente de banco/integração: ver `.env.example`. No stage elas são definidas na stack do Portainer.
