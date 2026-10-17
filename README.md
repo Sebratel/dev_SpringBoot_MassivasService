@@ -117,7 +117,8 @@ Stack criada **a partir do Git**: repositório `https://github.com/Sebratel/dev_
 arquivo `docker-compose-stage.yml`. O container se chama `massivas-service-stage` e fica na rede externa `proxy`.
 Sem porta publicada no host: só o gateway, na rede `proxy`, alcança este serviço.
 
-A imagem é construída pelo `Dockerfile` (multi-stage, Temurin 21, usuário não-root). O `sebratel-java-parent` é construído
-da fonte pública na própria imagem, então o build **não precisa de token**.
+A imagem `ghcr.io/sebratel/massivas-service:staging` é construída pelo GitHub Actions (`.github/workflows/staging-image.yml`, a cada push em `staging`) a partir
+do `Dockerfile` (multi-stage, Temurin 21, usuário não-root) e publicada no GHCR; o Portainer só a baixa. Construir a imagem dentro do host
+passa de 90 s, e o proxy do stage derruba a requisição de deploy. O `sebratel-java-parent` é construído da fonte pública na própria imagem, sem token.
 
 O branch `staging` recebe o código mais atualizado: `main` → `staging` antes de cada deploy.
