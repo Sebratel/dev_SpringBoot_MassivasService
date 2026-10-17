@@ -7,13 +7,14 @@ services:
     pull_policy: always
     container_name: massivas-service-stage
     restart: unless-stopped
-    mem_limit: 768m
+    mem_limit: 1g
     networks:
       - proxy
     environment:
       - SERVER_PORT=8101
       - APP_ENV=staging
       - TZ=America/Sao_Paulo
+      - JAVA_OPTS=-XX:MaxRAMPercentage=60 -XX:+ExitOnOutOfMemoryError
       - ERP_DB_URL=${ERP_DB_URL}
       - ERP_DB_USER=${ERP_DB_USER}
       - ERP_DB_PASS=${ERP_DB_PASS}
