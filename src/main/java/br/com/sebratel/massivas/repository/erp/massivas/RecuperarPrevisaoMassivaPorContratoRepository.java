@@ -21,7 +21,7 @@ public interface RecuperarPrevisaoMassivaPorContratoRepository extends JpaReposi
                     a.final_date AS PREVISAO,
                     a.conclusion_date AS FINALIZADO,
                     t2.title AS STATUS,
-                    it.title AS TIPO_SOLICITACAO,
+                    it.title AS "tipoSolicitacao",
                     a.description AS DESCRICAO
                 FROM assignments a
                     INNER JOIN assignment_incidents ai ON ai.assignment_id = a.id

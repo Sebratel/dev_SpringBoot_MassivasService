@@ -14,10 +14,10 @@ public interface FinishLinkedProtocolsRepository extends JpaRepository<ErpContra
 
     @Query(value = """
             SELECT
-                ai2.assignment_id AS "ASSIGNMENT_LINKADO",
-                ai.protocol AS "PROTOCOLO_DA_MASSIVA",
-                ai2.protocol AS "PROTOLOCO_LINKADO",
-                a.title AS "TITULO_DA_SOLICITACAO"
+                ai2.assignment_id AS "assignmentLinkado",
+                ai.protocol AS "protocoloDaMassiva",
+                ai2.protocol AS "protolocoLinkado",
+                a.title AS "tituloDaSolicitacao"
             FROM assignment_links al
             INNER JOIN assignment_incidents ai ON ai.assignment_id = al.assignment_id
             INNER JOIN assignment_incidents ai2 ON ai2.assignment_id = al.assignment_linked_id

@@ -40,14 +40,14 @@ public class FinishLinkedProtocolsService {
         String token = recuperarTokenDoUsuarioIntegradorEllevenService.executar().accessToken();
 
         for (FinishLinkedProtocolsProjection linked : linkedProtocols) {
-            // linked.getASSIGNMENT_LINKADO() could be null if it's a LEFT JOIN and no link exists,
+            // linked.getAssignmentLinkado() could be null if it's a LEFT JOIN and no link exists,
             // but the query logic should generally return valid links.
-            if (linked.getASSIGNMENT_LINKADO() == null) continue;
+            if (linked.getAssignmentLinkado() == null) continue;
 
-            log.info("Finalizing linked protocol: {} (Assignment ID: {})", linked.getPROTOLOCO_LINKADO(), linked.getASSIGNMENT_LINKADO());
+            log.info("Finalizing linked protocol: {} (Assignment ID: {})", linked.getProtolocoLinkado(), linked.getAssignmentLinkado());
 
             FinalizaRegistroMassivoInputDTO linkedInput = FinalizaRegistroMassivoInputDTO.builder()
-                    .assignmentId(linked.getASSIGNMENT_LINKADO().toString())
+                    .assignmentId(linked.getAssignmentLinkado().toString())
                     .incidentStatusId(mainInput.getIncidentStatusId())
                     .description(mainInput.getDescription())
                     .progress(mainInput.getProgress())
@@ -75,14 +75,14 @@ public class FinishLinkedProtocolsService {
                     if (response != null && response.getMessages() != null && !response.getMessages().isEmpty()) {
                         errorMessage = response.getMessages().get(0).getMessage();
                     }
-                    log.error("Failed to finalize linked protocol {}. Error: {}", linked.getPROTOLOCO_LINKADO(), errorMessage);
-                    throw new RuntimeException("Failed to finalize linked protocol: " + linked.getPROTOLOCO_LINKADO() + ". " + errorMessage);
+                    log.error("Failed to finalize linked protocol {}. Error: {}", linked.getProtolocoLinkado(), errorMessage);
+                    throw new RuntimeException("Failed to finalize linked protocol: " + linked.getProtolocoLinkado() + ". " + errorMessage);
                 }
 
-                log.info("Successfully finalized linked protocol: {}", linked.getPROTOLOCO_LINKADO());
+                log.info("Successfully finalized linked protocol: {}", linked.getProtolocoLinkado());
             } catch (Exception e) {
-                log.error("Error finalizing linked protocol {}: {}", linked.getPROTOLOCO_LINKADO(), e.getMessage());
-                throw new RuntimeException("Error finalizing linked protocol: " + linked.getPROTOLOCO_LINKADO(), e);
+                log.error("Error finalizing linked protocol {}: {}", linked.getProtolocoLinkado(), e.getMessage());
+                throw new RuntimeException("Error finalizing linked protocol: " + linked.getProtolocoLinkado(), e);
             }
         }
     }

@@ -17,7 +17,7 @@ public interface PrevisaoMassivaPorContratoProjection {
 
     String getSTATUS();
 
-    String getTIPO_SOLICITACAO();
+    String getTipoSolicitacao();
 
     String getDESCRICAO();
 }

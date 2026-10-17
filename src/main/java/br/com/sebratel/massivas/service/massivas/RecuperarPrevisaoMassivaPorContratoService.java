@@ -45,7 +45,7 @@ public class RecuperarPrevisaoMassivaPorContratoService {
         long estimatedTimeHour = previsao.getHour();
 
         String reason = massiva.getDESCRICAO() != null ? massiva.getDESCRICAO()
-                : (massiva.getTIPO_SOLICITACAO() != null ? massiva.getTIPO_SOLICITACAO() : "Evento massivo");
+                : (massiva.getTipoSolicitacao() != null ? massiva.getTipoSolicitacao() : "Evento massivo");
 
         ImpactDetailsOutputDTO impactDetails = ImpactDetailsOutputDTO.builder()
                 .reason(reason)

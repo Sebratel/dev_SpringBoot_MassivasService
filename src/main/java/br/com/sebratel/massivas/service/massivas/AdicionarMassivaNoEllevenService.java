@@ -30,13 +30,13 @@ public class AdicionarMassivaNoEllevenService {
     private long creationDelay;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
-    private static final String send_email = "0";
-    private static final String send_sms = "0";
-    private static final String email_model_id = "";
-    private static final String return_email_model_id = "";
-    private static final String send_push = "0";
-    private static final String push_model_id = "";
-    private static final String return_push_model_id = "";
+    private static final String SEND_EMAIL = "0";
+    private static final String SEND_SMS = "0";
+    private static final String EMAIL_MODEL_ID = "";
+    private static final String RETURN_EMAIL_MODEL_ID = "";
+    private static final String SEND_PUSH = "0";
+    private static final String PUSH_MODEL_ID = "";
+    private static final String RETURN_PUSH_MODEL_ID = "";
 
 
     @Autowired
@@ -83,13 +83,13 @@ public class AdicionarMassivaNoEllevenService {
 
         return CriacaoDeMassivaOutputDTO.builder()
                 .id(massivaId).input(input)
-                .send_email(send_email)
-                .send_sms(send_sms)
-                .email_model_id(email_model_id)
-                .return_email_model_id(return_email_model_id)
-                .send_push(send_push)
-                .push_model_id(push_model_id)
-                .return_push_model_id(return_push_model_id)
+                .sendEmail(SEND_EMAIL)
+                .sendSms(SEND_SMS)
+                .emailModelId(EMAIL_MODEL_ID)
+                .returnEmailModelId(RETURN_EMAIL_MODEL_ID)
+                .sendPush(SEND_PUSH)
+                .pushModelId(PUSH_MODEL_ID)
+                .returnPushModelId(RETURN_PUSH_MODEL_ID)
                 .protocolo(protocolo)
                 .build();
 
@@ -163,13 +163,13 @@ public class AdicionarMassivaNoEllevenService {
         formData.add("assignment_description", input.getAssignmentDescription());
         formData.add("maintenance_date", input.getMaintenanceDate().format(DATE_FORMATTER));
         formData.add("maintenance_time", input.getMaintenanceTime().format(TIME_FORMATTER));
-        formData.add("send_email", send_email);
-        formData.add("send_sms", send_sms);
-        formData.add("email_model_id", email_model_id);
-        formData.add("return_email_model_id", return_email_model_id);
-        formData.add("send_push", send_push);
-        formData.add("push_model_id", push_model_id);
-        formData.add("return_push_model_id", return_push_model_id);
+        formData.add("send_email", SEND_EMAIL);
+        formData.add("send_sms", SEND_SMS);
+        formData.add("email_model_id", EMAIL_MODEL_ID);
+        formData.add("return_email_model_id", RETURN_EMAIL_MODEL_ID);
+        formData.add("send_push", SEND_PUSH);
+        formData.add("push_model_id", PUSH_MODEL_ID);
+        formData.add("return_push_model_id", RETURN_PUSH_MODEL_ID);
         addListToForm(formData, "access_point_ids[]", input.getAccessPointIds());
 
         log.info(formData.toString());

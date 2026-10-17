@@ -21,7 +21,7 @@ public interface RecuperarTodasAsMassivasPeloBancoRepository extends JpaReposito
                     a.description AS DESCRICAO,
                     t.title AS EQUIPE,
                     t2.title AS STATUS,
-                    it.title AS TIPO_SOLICITACAO,
+                    it.title AS "tipoSolicitacao",
                     v.name AS SOLICITANTE,
                     p2.name AS RESPONSAVEL,
                     cs.title AS CATALOGO,
