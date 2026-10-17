@@ -7,7 +7,7 @@ import br.com.sebratel.massivas.model.Employee;
 import br.com.sebratel.massivas.model.entity.AffectedUsersEntity;
 import br.com.sebratel.massivas.service.EmployeeService;
 import br.com.sebratel.massivas.service.RecuperarTokenDoUsuarioIntegradorEllevenService;
-import br.com.sebratel.massivas.utils.JwtInformation;
+import br.com.sebratel.massivas.utils.CallerIdentity;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class AdicionarMassivaNoEllevenApiService {
     }
 
     public AberturaRegistroMassivoOutputDTO executar(@Valid AberturaRegistroMassivoInputDTO input) {
-        Employee x = JwtInformation.retrieveUserData();
+        Employee x = CallerIdentity.retrieveUserData();
         String email = x.email();
         String name = x.name();
 

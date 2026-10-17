@@ -13,16 +13,18 @@ import br.com.sebratel.massivas.service.RecuperarTokenDoUsuarioIntegradorElleven
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -38,7 +40,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -59,26 +60,17 @@ class AdicionarMassivaNoEllevenApiServiceTest {
     @InjectMocks
     private AdicionarMassivaNoEllevenApiService service;
 
-    private SecurityContext securityContext;
-    private Authentication authentication;
-    private Jwt jwt;
-
     @BeforeEach
     void setUp() {
-        securityContext = mock(SecurityContext.class);
-        authentication = mock(Authentication.class);
-        jwt = mock(Jwt.class);
-
-        SecurityContextHolder.setContext(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(jwt);
-        lenient().when(jwt.getClaim("email")).thenReturn("test@sebratel.com.br");
-        lenient().when(jwt.getClaim("name")).thenReturn("Test User");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-User-Email", "test@sebratel.com.br");
+        request.addHeader("X-User-Name", "Test+User");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 
     @AfterEach
     void tearDown() {
-        SecurityContextHolder.clearContext();
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
@@ -348,7 +340,7 @@ class AdicionarMassivaNoEllevenApiServiceTest {
 
     @Test
     void executarComUsuarioSemJwtDeveRecusarSemChamarElleven() {
-        when(authentication.getPrincipal()).thenReturn("anonymous");
+        RequestContextHolder.resetRequestAttributes();
         AberturaRegistroMassivoInputDTO input = inputBase();
         input.setAffectedUsers(umAfetado());
         input.setAffectedUsersQuantity(1);
@@ -362,8 +354,7 @@ class AdicionarMassivaNoEllevenApiServiceTest {
 
     @Test
     void executarComJwtSemClaimsResolveSolicitantePeloPersonId() {
-        when(jwt.getClaim("email")).thenReturn(null);
-        when(jwt.getClaim("name")).thenReturn(null);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
         AberturaRegistroMassivoInputDTO input = inputBase();
         input.setPersonId(141085L);
         input.setAffectedUsers(umAfetado());
@@ -393,7 +384,7 @@ class AdicionarMassivaNoEllevenApiServiceTest {
 
     @Test
     void executarComJwtSemClaimsEPersonIdSemCadastroDeveRecusar() {
-        when(jwt.getClaim("email")).thenReturn(null);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
         AberturaRegistroMassivoInputDTO input = inputBase();
         input.setPersonId(999L);
         input.setAffectedUsers(umAfetado());
@@ -406,7 +397,7 @@ class AdicionarMassivaNoEllevenApiServiceTest {
 
     @Test
     void executarComJwtSemClaimsEFalhaNaConsultaDeveRecusar() {
-        when(jwt.getClaim("email")).thenReturn(null);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
         AberturaRegistroMassivoInputDTO input = inputBase();
         input.setPersonId(141085L);
         input.setAffectedUsers(umAfetado());
@@ -419,7 +410,7 @@ class AdicionarMassivaNoEllevenApiServiceTest {
 
     @Test
     void executarComJwtSemEmailDeveRecusar() {
-        when(jwt.getClaim("email")).thenReturn("");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
         AberturaRegistroMassivoInputDTO input = inputBase();
         input.setAffectedUsers(umAfetado());
         input.setAffectedUsersQuantity(1);

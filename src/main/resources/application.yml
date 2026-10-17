@@ -3,12 +3,6 @@ spring:
     name: massivas-service
   jackson:
     time-zone: America/Sao_Paulo
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
-          issuer-uri: https://accounts.google.com
   mvc:
     async:
       request-timeout: 600000

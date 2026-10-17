@@ -4,7 +4,7 @@ import br.com.sebratel.massivas.dto.massivas.api.AberturaRegistroMassivoInputDTO
 import br.com.sebratel.massivas.dto.massivas.api.AberturaRegistroMassivoOutputDTO;
 import br.com.sebratel.massivas.model.Employee;
 import br.com.sebratel.massivas.service.RecuperarTokenDoUsuarioIntegradorEllevenService;
-import br.com.sebratel.massivas.utils.JwtInformation;
+import br.com.sebratel.massivas.utils.CallerIdentity;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class AbrirGmudNoEllevenApiService {
     }
 
     public AberturaRegistroMassivoOutputDTO executar(@Valid AberturaRegistroMassivoInputDTO input) {
-        Employee user = JwtInformation.retrieveUserData();
+        Employee user = CallerIdentity.retrieveUserData();
         String email = user.email();
         String name = user.name();
 

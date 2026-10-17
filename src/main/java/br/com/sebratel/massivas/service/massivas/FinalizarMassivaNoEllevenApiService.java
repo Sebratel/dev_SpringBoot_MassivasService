@@ -4,7 +4,7 @@ import br.com.sebratel.massivas.dto.massivas.api.FinalizaRegistroMassivoInputDTO
 import br.com.sebratel.massivas.dto.massivas.api.FinalizarRegistroMassivoOutputDTO;
 import br.com.sebratel.massivas.model.Employee;
 import br.com.sebratel.massivas.service.RecuperarTokenDoUsuarioIntegradorEllevenService;
-import br.com.sebratel.massivas.utils.JwtInformation;
+import br.com.sebratel.massivas.utils.CallerIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -38,7 +38,7 @@ public class FinalizarMassivaNoEllevenApiService {
         log.info("Iniciando finalização de massiva principal no ERP via API {}", this.getClass());
         String token = recuperarTokenDoUsuarioIntegradorEllevenService.executar().accessToken();
 
-        Employee x = JwtInformation.retrieveUserData();
+        Employee x = CallerIdentity.retrieveUserData();
         String email = x.email();
         String name = x.name();
         input.setDescription(input.getDescription() + " - " + name + "("+ email +")");

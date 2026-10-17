@@ -7,14 +7,16 @@ import br.com.sebratel.massivas.service.RecuperarTokenDoUsuarioIntegradorElleven
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -44,29 +46,21 @@ class FinalizarMassivaNoEllevenApiServiceTest {
     @InjectMocks
     private FinalizarMassivaNoEllevenApiService service;
 
-    private SecurityContext securityContext;
-    private Authentication authentication;
-    private Jwt jwt;
-
     @BeforeEach
     void setUp() {
-        securityContext = mock(SecurityContext.class);
-        authentication = mock(Authentication.class);
-        jwt = mock(Jwt.class);
-
-        SecurityContextHolder.setContext(securityContext);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-User-Email", "test@sebratel.com.br");
+        request.addHeader("X-User-Name", "Test+User");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 
     private void mockJwt() {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(jwt);
-        when(jwt.getClaim("email")).thenReturn("test@sebratel.com.br");
-        when(jwt.getClaim("name")).thenReturn("Test User");
+        // identidade ja entregue pelo gateway (cabecalhos X-User-*) no setUp
     }
 
     @AfterEach
     void tearDown() {
-        SecurityContextHolder.clearContext();
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
