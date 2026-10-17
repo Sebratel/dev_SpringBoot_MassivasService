@@ -5,7 +5,7 @@ Usuários afetados, massivas (Elleven/ERP/Native), histórico, GMUD, Matrix e si
 Parte da migração do BFF para API Gateway (`Sebratel/dev_SpringBoot_APIGateway`, `specs/API_GATEWAY.md`).
 Serviço **massivas-service**, porta **8101**, atrás do `dev_SpringBoot_Gateway`.
 
-> **Estado: esqueleto.** Sobe, expõe `/actuator/health` e tem build, Checkstyle e JaCoCo ativos, mas **a lógica ainda está no
+> **Estado: esqueleto.** Sobe, expõe `/actuator/health` (público; o resto exige JWT) e tem build, Checkstyle e JaCoCo ativos, mas **a lógica ainda está no
 > monólito**. As rotas abaixo são o contrato que este serviço precisa atender, idêntico ao do BFF atual (`contract/routes.json`).
 
 ## Rotas que este serviço deve atender (74)
@@ -110,3 +110,14 @@ Variáveis de ambiente: ver `.env.example` (nunca commite o `.env`).
 - Dependências compartilhadas (`common-web`, `common-security`, `common-elleven`) vêm de `dev_Maven_Commons`
   e entram quando houver código a compartilhar.
 - Remover ou renomear rota é mudança incompatível: o contrato é o manifesto do monólito (`docs/contract/manifest.json`).
+
+## Deploy em staging (Portainer)
+
+Stack criada **a partir do Git**: repositório `https://github.com/Sebratel/dev_SpringBoot_MassivasService`, branch `staging`,
+arquivo `docker-compose-stage.yml`. O container se chama `massivas-service-stage` e fica na rede externa `proxy`.
+Sem porta publicada no host: só o gateway, na rede `proxy`, alcança este serviço.
+
+A imagem é construída pelo `Dockerfile` (multi-stage, Temurin 21, usuário não-root). O `sebratel-java-parent` é construído
+da fonte pública na própria imagem, então o build **não precisa de token**.
+
+O branch `staging` recebe o código mais atualizado: `main` → `staging` antes de cada deploy.
