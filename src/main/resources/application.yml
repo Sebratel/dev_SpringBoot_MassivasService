@@ -38,3 +38,8 @@ elleven:
   syndata: ${ELLEVEN_CLIENT_SYNDATA:}
   grant-type: ${ELLEVEN_CLIENT_GRANT_TYPE:}
   scope: ${ELLEVEN_CLIENT_SCOPE:}
+
+# O API Gateway manda traceparent e X-Request-Id; o CorrelationFilter os poe no log: [traceId,requestId].
+logging:
+  pattern:
+    level: "%5p [%X{traceId:-},%X{requestId:-}]"
