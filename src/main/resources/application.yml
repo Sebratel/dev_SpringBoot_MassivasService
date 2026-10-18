@@ -30,7 +30,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # prometheus: o servico so aceita chamadas da rede privada (gateway e Prometheus)
+        include: health,info,prometheus
+  metrics:
+    tags:
+      application: massivas-service
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 elleven:
   client-id: ${ELLEVEN_CLIENT_ID:}
