@@ -1,6 +1,7 @@
 # Stack de STAGING (Portainer, a partir do Git: branch staging). A imagem e construida no GitHub Actions
 # (workflow staging-image.yml) e publicada no GHCR; o Portainer so a baixa.
-# Rede externa "proxy": a mesma do BFF atual; os serviços se enxergam pelo nome do container.
+# Rede PRIVADA "gateway-backend": so o API Gateway e os 6 servicos estao nela. Os servicos NAO ficam na rede "proxy"
+# (compartilhada com antifraude, dho, hub, kibana etc.): so o gateway recebe chamadas deles. Nenhum servico publica porta.
 services:
   massivas-service:
     image: ghcr.io/sebratel/massivas-service:staging
@@ -9,7 +10,7 @@ services:
     restart: unless-stopped
     mem_limit: 1g
     networks:
-      - proxy
+      - backend
     environment:
       - SERVER_PORT=8101
       - APP_ENV=staging
@@ -34,5 +35,6 @@ services:
       start_period: 60s
 
 networks:
-  proxy:
-    external: true
+  backend:
+    name: gateway-backend
+    external: true   # criada pela stack do gateway (faca o deploy do gateway primeiro)
