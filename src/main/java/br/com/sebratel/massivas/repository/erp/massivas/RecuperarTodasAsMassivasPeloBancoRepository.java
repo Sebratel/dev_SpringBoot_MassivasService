@@ -35,7 +35,7 @@ public interface RecuperarTodasAsMassivasPeloBancoRepository extends JpaReposito
                     LEFT JOIN people p2 ON p2.id = a.requestor_id
                     LEFT JOIN catalog_services cs ON cs.id = ai.catalog_service_id
                     LEFT JOIN authentication_access_points aap ON aap.id = ai.authentication_access_point_id
-                WHERE it.id IN (1176, 302, 1257, 1265)
+                WHERE it.id IN (1176, 301, 302, 1257, 1265)
                   AND (
                         t2.title NOT IN ('Encerrado', 'Cancelado')
                         OR
