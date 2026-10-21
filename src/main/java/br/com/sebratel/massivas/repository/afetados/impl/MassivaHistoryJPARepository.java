@@ -22,4 +22,14 @@ public interface MassivaHistoryJPARepository extends JpaRepository<MassivaHistor
                                  @Param("closedAt") LocalDateTime closedAt,
                                  @Param("closedBy") String closedBy,
                                  @Param("closeDescription") String closeDescription);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE massiva_history SET status = 'cancelada', closed_at = :cancelledAt, " +
+            "closed_by = :cancelledBy, close_description = :cancelDescription " +
+            "WHERE protocol = :protocol AND status <> 'cancelada'", nativeQuery = true)
+    Integer cancelarPorProtocolo(@Param("protocol") Long protocol,
+                                 @Param("cancelledAt") LocalDateTime cancelledAt,
+                                 @Param("cancelledBy") String cancelledBy,
+                                 @Param("cancelDescription") String cancelDescription);
 }

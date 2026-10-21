@@ -39,7 +39,7 @@ public interface RecuperarTodasAsMassivasPeloBancoRepository extends JpaReposito
                   AND (
                         t2.title NOT IN ('Encerrado', 'Cancelado')
                         OR
-                        (t2.title = 'Encerrado' AND a.created >= CURRENT_DATE - INTERVAL '1 month')
+                        (t2.title IN ('Encerrado', 'Cancelado') AND a.created >= CURRENT_DATE - INTERVAL '1 month')
                       )
                 ORDER BY a.id DESC
             """, nativeQuery = true)
