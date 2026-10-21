@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -127,6 +128,27 @@ public class MassiveElevenController {
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             log.error("Error retrieving massive incidents from ERP database. {}", e.getMessage());
+            throw e;
+        }
+    }
+
+    @GetMapping({"/status-por-protocolos", "/status-by-protocols"})
+    public ResponseEntity<ApiResponse<List<MassivasBFFOutputDTO>>> retrieveStatusByProtocols(
+            @RequestParam("protocolos") List<Long> protocolos) {
+        try {
+            List<MassivasBFFOutputDTO> output = recuperarTodasAsMassivasPeloBancoService.executarPorProtocolos(protocolos);
+
+            log.info("Elleven status successfully retrieved for {} protocol(s).", protocolos.size());
+
+            ApiResponse<List<MassivasBFFOutputDTO>> response = ApiResponse.<List<MassivasBFFOutputDTO>>builder()
+                    .success(true)
+                    .message("Elleven status successfully retrieved.")
+                    .data(output)
+                    .build();
+
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            log.error("Error retrieving Elleven status by protocols. {}", e.getMessage());
             throw e;
         }
     }
