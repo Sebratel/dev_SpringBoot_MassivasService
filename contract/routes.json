@@ -416,6 +416,30 @@
     "body": null
   },
   {
+    "method": "GET",
+    "path": "/api/v1/massivas-eleven/status-por-protocolos",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": true,
+    "handler": "MassiveElevenController#retrieveStatusByProtocols",
+    "pathVariables": [],
+    "queryParams": ["protocolos"],
+    "headers": [],
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/massivas-eleven/status-by-protocols",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": true,
+    "handler": "MassiveElevenController#retrieveStatusByProtocols",
+    "pathVariables": [],
+    "queryParams": ["protocolos"],
+    "headers": [],
+    "body": null
+  },
+  {
     "method": "POST",
     "path": "/api/v1/massivas-eleven/salvar-massiva-via-api",
     "service": "massivas",
@@ -720,6 +744,30 @@
     "body": null
   },
   {
+    "method": "GET",
+    "path": "/api/v1/massivas/status-por-protocolos",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": true,
+    "handler": "MassiveElevenController#retrieveStatusByProtocols",
+    "pathVariables": [],
+    "queryParams": ["protocolos"],
+    "headers": [],
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/massivas/status-by-protocols",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": true,
+    "handler": "MassiveElevenController#retrieveStatusByProtocols",
+    "pathVariables": [],
+    "queryParams": ["protocolos"],
+    "headers": [],
+    "body": null
+  },
+  {
     "method": "POST",
     "path": "/api/v1/massivas/salvar-massiva-via-api",
     "service": "massivas",
@@ -872,6 +920,30 @@
     "handler": "MassiveElevenController#retrieveAllMassiveIncidentsViaDatabase",
     "pathVariables": [],
     "queryParams": [],
+    "headers": [],
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/massive-incidents/status-por-protocolos",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": true,
+    "handler": "MassiveElevenController#retrieveStatusByProtocols",
+    "pathVariables": [],
+    "queryParams": ["protocolos"],
+    "headers": [],
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/v1/massive-incidents/status-by-protocols",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": true,
+    "handler": "MassiveElevenController#retrieveStatusByProtocols",
+    "pathVariables": [],
+    "queryParams": ["protocolos"],
     "headers": [],
     "body": null
   },

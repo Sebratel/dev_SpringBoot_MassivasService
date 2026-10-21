@@ -2,6 +2,7 @@ package br.com.sebratel.massivas.service.massivas;
 
 import br.com.sebratel.massivas.dto.massivas.MassivasBFFOutputDTO;
 import br.com.sebratel.massivas.repository.erp.massivas.RecuperarTodasAsMassivasPeloBancoRepository;
+import br.com.sebratel.massivas.repository.erp.projections.RecuperarTodasAsMassivasProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +19,18 @@ public class RecuperarTodasAsMassivasPeloBancoService {
     }
 
     public List<MassivasBFFOutputDTO> executar() {
-        return this.recuperarTodasAsMassivasPeloBancoRepository.findActiveAssignments()
-                .stream().map(p -> new MassivasBFFOutputDTO(
+        return toDTOs(this.recuperarTodasAsMassivasPeloBancoRepository.findActiveAssignments());
+    }
+
+    public List<MassivasBFFOutputDTO> executarPorProtocolos(List<Long> protocolos) {
+        if (protocolos == null || protocolos.isEmpty()) {
+            return List.of();
+        }
+        return toDTOs(this.recuperarTodasAsMassivasPeloBancoRepository.findByProtocolos(protocolos));
+    }
+
+    private List<MassivasBFFOutputDTO> toDTOs(List<RecuperarTodasAsMassivasProjection> rows) {
+        return rows.stream().map(p -> new MassivasBFFOutputDTO(
                         p.getID(),
                         p.getCRIACAO(),
                         p.getFINALIZADO(),
