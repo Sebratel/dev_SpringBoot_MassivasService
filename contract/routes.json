@@ -496,6 +496,34 @@
     "body": "MassivaHistoryEncerramentoInputDTO?"
   },
   {
+    "method": "PATCH",
+    "path": "/api/v1/massivas-history/{protocol}/cancelar",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": false,
+    "handler": "MassivaHistoryController#cancelMassivaHistory",
+    "pathVariables": [
+      "protocol"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "body": "MassivaHistoryCancelamentoInputDTO?"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/massivas-history/{protocol}/cancel",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": false,
+    "handler": "MassivaHistoryController#cancelMassivaHistory",
+    "pathVariables": [
+      "protocol"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "body": "MassivaHistoryCancelamentoInputDTO?"
+  },
+  {
     "method": "GET",
     "path": "/api/v1/massivas-splitters/recover-via-database",
     "service": "massivas",
@@ -546,6 +574,34 @@
     "queryParams": [],
     "headers": [],
     "body": "MassivaHistoryEncerramentoInputDTO?"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/massivas-splitters/{protocol}/cancelar",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": false,
+    "handler": "MassivaHistoryController#cancelMassivaHistory",
+    "pathVariables": [
+      "protocol"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "body": "MassivaHistoryCancelamentoInputDTO?"
+  },
+  {
+    "method": "PATCH",
+    "path": "/api/v1/massivas-splitters/{protocol}/cancel",
+    "service": "massivas",
+    "auth": "authenticated",
+    "safe": false,
+    "handler": "MassivaHistoryController#cancelMassivaHistory",
+    "pathVariables": [
+      "protocol"
+    ],
+    "queryParams": [],
+    "headers": [],
+    "body": "MassivaHistoryCancelamentoInputDTO?"
   },
   {
     "method": "POST",
