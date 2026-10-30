@@ -97,6 +97,7 @@ public class AffectedUserService {
                     .reason(affectedUser.getReason())
                     .estimateTimeOfRestoration(estimateTimeOfRestoration)
                     .estimatedTimeHour(timeHour)
+                    .estimatedFinish(finish)
                     .build();
             Map<Long, ImpactDetailsOutputDTO> impactedUsers = new HashMap<>();
             impactedUsers.put(affectedUser.getContractId(), impactDetailsDTO);

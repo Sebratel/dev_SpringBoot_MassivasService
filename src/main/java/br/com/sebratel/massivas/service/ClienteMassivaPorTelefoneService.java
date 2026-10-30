@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -98,6 +99,8 @@ public class ClienteMassivaPorTelefoneService {
                 .emMassiva(true)
                 .previsaoHoras(menor.getPrevisaoHoras())
                 .previsaoHora(menor.getPrevisaoHora())
+                .previsaoEm(menor.getPrevisaoEm())
+                .previsaoVencida(menor.getPrevisaoVencida())
                 .motivo(menor.getMotivo())
                 .contratosEmMassiva(emMassiva)
                 .build();
@@ -123,6 +126,9 @@ public class ClienteMassivaPorTelefoneService {
                 .motivo(impacto.getReason())
                 .previsaoHoras(impacto.getEstimateTimeOfRestoration())
                 .previsaoHora(impacto.getEstimatedTimeHour())
+                .previsaoEm(impacto.getEstimatedFinish() == null ? null : impacto.getEstimatedFinish().toString())
+                .previsaoVencida(impacto.getEstimatedFinish() == null ? null
+                        : !impacto.getEstimatedFinish().isAfter(LocalDateTime.now()))
                 .build();
     }
 }
