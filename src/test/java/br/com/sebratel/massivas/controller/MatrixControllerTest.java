@@ -41,7 +41,7 @@ class MatrixControllerTest extends BaseTest {
 
     @Test
     @DisplayName("POST /telefone devolve a situacao de massiva de quem ligou")
-    void getMassiveInfoByPhone_Success() throws Exception {
+    void getMassiveInfoByPhoneSuccess() throws Exception {
         when(clienteMassivaPorTelefoneService.consultar("51995664811")).thenReturn(
                 ClienteMassivaPorTelefoneOutputDTO.builder()
                         .status(ClienteMassivaPorTelefoneOutputDTO.EM_MASSIVA)
@@ -64,7 +64,7 @@ class MatrixControllerTest extends BaseTest {
 
     @Test
     @DisplayName("POST /telefone sem telefone responde 400")
-    void getMassiveInfoByPhone_BlankPhone() throws Exception {
+    void getMassiveInfoByPhoneBlankPhone() throws Exception {
         mockMvc.perform(post("/api/v1/matrix/telefone")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"telefone\":\"\"}"))
