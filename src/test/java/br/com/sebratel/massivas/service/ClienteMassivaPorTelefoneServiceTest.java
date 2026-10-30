@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -39,7 +40,7 @@ class ClienteMassivaPorTelefoneServiceTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5);
+        service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5, mock(AutoIspService.class));
     }
 
     @Test

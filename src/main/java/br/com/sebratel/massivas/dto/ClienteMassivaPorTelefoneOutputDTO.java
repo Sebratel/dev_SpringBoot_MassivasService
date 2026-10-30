@@ -52,6 +52,14 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     @JsonProperty("previsao_hora")
     private Long previsaoHora;
 
+    /** Ha evento de rede ativo no AutoISP atingindo contrato do cliente (independe de massiva). */
+    @JsonProperty("em_autoisp")
+    private boolean emAutoisp;
+
+    /** Eventos do AutoISP; ausente quando o AutoISP nao esta configurado neste servidor. */
+    @JsonProperty("autoisp")
+    private AutoIspSituacaoDTO autoisp;
+
     @JsonProperty("motivo")
     private String motivo;
 
