@@ -2,9 +2,11 @@ package br.com.sebratel.massivas.controller;
 
 import br.com.sebratel.massivas.dto.ApiResponse;
 import br.com.sebratel.massivas.dto.ClienteMassivaPorTelefoneOutputDTO;
+import br.com.sebratel.massivas.dto.MatrixDocumentoInputDTO;
 import br.com.sebratel.massivas.dto.MatrixMassiveInputDTO;
 import br.com.sebratel.massivas.dto.MatrixMassiveOutputDTO;
 import br.com.sebratel.massivas.dto.MatrixTelefoneInputDTO;
+import br.com.sebratel.massivas.service.ClienteMassivaPorDocumentoService;
 import br.com.sebratel.massivas.service.ClienteMassivaPorTelefoneService;
 import br.com.sebratel.massivas.service.MatrixService;
 import jakarta.validation.Valid;
@@ -21,12 +23,15 @@ public class MatrixController {
 
     final MatrixService matrixService;
     final ClienteMassivaPorTelefoneService clienteMassivaPorTelefoneService;
+    final ClienteMassivaPorDocumentoService clienteMassivaPorDocumentoService;
 
     @Autowired
     public MatrixController(MatrixService matrixService,
-                            ClienteMassivaPorTelefoneService clienteMassivaPorTelefoneService) {
+                            ClienteMassivaPorTelefoneService clienteMassivaPorTelefoneService,
+                            ClienteMassivaPorDocumentoService clienteMassivaPorDocumentoService) {
         this.matrixService = matrixService;
         this.clienteMassivaPorTelefoneService = clienteMassivaPorTelefoneService;
+        this.clienteMassivaPorDocumentoService = clienteMassivaPorDocumentoService;
     }
 
 
@@ -50,6 +55,20 @@ public class MatrixController {
                 .success(true)
                 .message("Massive data by phone retrieved successfully")
                 .data(clienteMassivaPorTelefoneService.consultar(input.getTelefone()))
+                .build();
+    }
+
+    /**
+     * Situacao de massiva a partir do CPF/CNPJ digitado pelo atendente. Exige autenticacao no gateway: devolve se o
+     * documento pertence a um cliente e o motivo da massiva.
+     */
+    @PostMapping("/documento")
+    public ApiResponse<ClienteMassivaPorTelefoneOutputDTO> getMassiveInfoByDocument(
+            @Valid @RequestBody MatrixDocumentoInputDTO input) {
+        return ApiResponse.<ClienteMassivaPorTelefoneOutputDTO>builder()
+                .success(true)
+                .message("Massive data by document retrieved successfully")
+                .data(clienteMassivaPorDocumentoService.consultar(input.getDocumento()))
                 .build();
     }
 }

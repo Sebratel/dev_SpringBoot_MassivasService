@@ -61,18 +61,25 @@ public class ClienteMassivaPorTelefoneService {
                     .clientesEncontrados(clientes)
                     .build();
         }
+        return avaliarMassiva(vinculos, ClienteMassivaPorTelefoneOutputDTO.builder()
+                .telefone(mascarado)
+                .clientesEncontrados(clientes));
+    }
+
+    /**
+     * Massiva de cada contrato dos vinculos. Compartilhado com a busca por documento: {@code base} ja traz o que
+     * identifica a consulta (telefone ou documento mascarado e quantidade de clientes).
+     */
+    ClienteMassivaPorTelefoneOutputDTO avaliarMassiva(List<ClienteContrato> vinculos,
+            ClienteMassivaPorTelefoneOutputDTO.ClienteMassivaPorTelefoneOutputDTOBuilder base) {
         List<ContratoMassiva> emMassiva = vinculos.stream()
                 .map(this::massivaDoContrato)
                 .flatMap(Optional::stream)
                 .sorted(Comparator.comparing(ContratoMassiva::getPrevisaoHoras))
                 .toList();
-        log.info("Telefone {}: {} cliente(s), {} contrato(s), {} em massiva",
-                mascarado, clientes, vinculos.size(), emMassiva.size());
+        log.info("{} contrato(s) consultados, {} em massiva", vinculos.size(), emMassiva.size());
 
-        var saida = ClienteMassivaPorTelefoneOutputDTO.builder()
-                .telefone(mascarado)
-                .clientesEncontrados(clientes)
-                .contratosConsultados(vinculos.size());
+        var saida = base.contratosConsultados(vinculos.size());
         if (emMassiva.isEmpty()) {
             return saida.status(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA).build();
         }

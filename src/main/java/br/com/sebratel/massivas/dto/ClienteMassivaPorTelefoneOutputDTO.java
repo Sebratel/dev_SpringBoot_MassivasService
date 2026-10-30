@@ -33,6 +33,10 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     @JsonProperty("telefone")
     private String telefone;
 
+    /** Documento consultado (CPF/CNPJ), mascarado. So na busca por documento. */
+    @JsonProperty("documento")
+    private String documento;
+
     /** Quantos clientes diferentes usam este telefone (mais de um exige confirmacao do atendente). */
     @JsonProperty("clientes_encontrados")
     private int clientesEncontrados;
