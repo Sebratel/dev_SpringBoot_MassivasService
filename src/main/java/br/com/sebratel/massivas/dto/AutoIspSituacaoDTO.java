@@ -27,6 +27,13 @@ public class AutoIspSituacaoDTO {
     @JsonProperty("eventos")
     private List<Evento> eventos;
 
+    /** Eventos ja encerrados nas ultimas {@code recentes_horas} horas que atingiram contratos do cliente. */
+    @JsonProperty("recentes")
+    private List<Evento> recentes;
+
+    @JsonProperty("recentes_horas")
+    private Integer recentesHoras;
+
     @Data
     @Builder
     public static class Evento {
@@ -38,6 +45,9 @@ public class AutoIspSituacaoDTO {
         private String status;
         @JsonProperty("inicio")
         private String inicio;
+        /** Fim do evento; ausente enquanto ele esta ativo. */
+        @JsonProperty("fim")
+        private String fim;
         @JsonProperty("contratos_afetados")
         private Long contratosAfetados;
     }
