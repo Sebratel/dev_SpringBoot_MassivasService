@@ -46,7 +46,18 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Acionar deploy no Portainer (pull + redeploy)
-        # So dispara o pull da imagem ja publicada acima; o host nao faz build, por isso nao
-        # esbarra no timeout de 90s do proxy do stage (ver comentario no topo do arquivo).
+        # So dispara o pull da imagem ja publicada acima; o host nao faz build, por isso nao esbarra no
+        # timeout de 90 s do proxy do stage. Sem o secret, a imagem fica publicada e o redeploy segue manual
+        # (aviso, nao falha). Mostra o status e o corpo da resposta do Portainer, nunca a URL (ela e segredo).
+        env:
+          WEBHOOK: ${{ secrets.PORTAINER_MASSIVAS_WEBHOOK_URL }}
         run: |
-          curl --fail --silent --show-error -X POST "${{ secrets.PORTAINER_MASSIVAS_WEBHOOK_URL }}"
+          if [ -z "$WEBHOOK" ]; then
+            echo "::warning::Secret PORTAINER_MASSIVAS_WEBHOOK_URL ausente: imagem publicada, mas o redeploy do Portainer nao foi acionado."
+            exit 0
+          fi
+          codigo=$(curl --silent --show-error --output resposta.txt --write-out '%{http_code}' -X POST "$WEBHOOK")
+          echo "Portainer respondeu HTTP $codigo"
+          head -c 600 resposta.txt || true
+          echo
+          case "$codigo" in 2??) ;; *) exit 1 ;; esac
