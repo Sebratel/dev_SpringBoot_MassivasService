@@ -11,6 +11,10 @@ import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +41,9 @@ public class AutoIspClient {
             "content", "massives", "massive_events", "rows");
     private static final List<String> CHAVES_TOKEN = List.of("token", "access_token", "accessToken", "jwt",
             "id_token", "idToken", "bearer");
+    private static final String STATUS_ENCERRADO = "closed";
+    private static final int MAX_PAGINAS_ENCERRADOS = 5;
+    private static final ZoneId ZONA = ZoneId.of("America/Sao_Paulo");
     private static final int POR_PAGINA = 1000;
     private static final long TOKEN_PADRAO_SEGUNDOS = 3600;
 
@@ -44,7 +51,7 @@ public class AutoIspClient {
     public record Recurso(Long contratoId, String pppoe) {
     }
 
-    public record Evento(long id, String tipo, String status, String inicio, List<Recurso> recursos) {
+    public record Evento(long id, String tipo, String status, String inicio, String fim, List<Recurso> recursos) {
     }
 
     /** O AutoISP nao respondeu ou recusou o login: quem chama mostra "indisponivel" em vez de falhar. */
@@ -65,6 +72,8 @@ public class AutoIspClient {
     private Instant tokenAte = Instant.EPOCH;
     private List<Evento> cache = List.of();
     private Instant cacheAte = Instant.EPOCH;
+    private List<Evento> cacheEncerrados = List.of();
+    private Instant cacheEncerradosAte = Instant.EPOCH;
 
     @Autowired
     public AutoIspClient(@Value("${autoisp.auth-url:}") String urlLogin,
@@ -144,12 +153,62 @@ public class AutoIspClient {
         return falhas;
     }
 
+    /**
+     * Eventos encerrados cujo fim (ou, sem fim, o inicio) e de {@code desde} em diante. A API so e conhecida por
+     * filtrar por status, entao a lista de encerrados e baixada (ate {@value #MAX_PAGINAS_ENCERRADOS} paginas) e a
+     * janela e aplicada aqui; o resultado fica em cache por mais tempo que o dos ativos.
+     */
+    public synchronized List<Evento> eventosEncerradosDesde(Instant desde) {
+        if (!Instant.now().isBefore(cacheEncerradosAte)) {
+            List<Evento> todos = new ArrayList<>();
+            for (int pagina = 1; pagina <= MAX_PAGINAS_ENCERRADOS; pagina++) {
+                List<Evento> lote = eventos(STATUS_ENCERRADO, pagina);
+                todos.addAll(lote);
+                if (lote.size() < POR_PAGINA) {
+                    break;
+                }
+            }
+            cacheEncerrados = List.copyOf(todos);
+            cacheEncerradosAte = Instant.now().plus(validadeCache.multipliedBy(2));
+            log.info("AutoISP: {} evento(s) encerrado(s) lidos", cacheEncerrados.size());
+        }
+        return cacheEncerrados.stream().filter(e -> recente(e, desde)).toList();
+    }
+
+    private static boolean recente(Evento e, Instant desde) {
+        Instant fim = instante(e.fim());
+        Instant referencia = fim != null ? fim : instante(e.inicio());
+        return referencia != null && !referencia.isBefore(desde);
+    }
+
+    /** Data/hora da API: com fuso (ISO-8601) ou sem fuso, que se entende como horario de Sao Paulo. */
+    static Instant instante(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return null;
+        }
+        String t = texto.trim().replace(' ', 'T');
+        try {
+            return OffsetDateTime.parse(t).toInstant();
+        } catch (DateTimeParseException ignorado) {
+            // sem fuso: tenta como horario local
+        }
+        try {
+            return LocalDateTime.parse(t).atZone(ZONA).toInstant();
+        } catch (DateTimeParseException ignorado) {
+            return null;
+        }
+    }
+
     /** Eventos com o status administrativo dado, ou todos (sem filtro) quando {@code status} e null. */
     private List<Evento> eventos(String status) {
+        return eventos(status, 1);
+    }
+
+    private List<Evento> eventos(String status, int pagina) {
         String filtro = "[{\"field\":\"admin_status\",\"op\":\"==\",\"value\":\"" + status + "\"}]";
         RestClient.RequestHeadersSpec<?> pedido = status == null
-                ? http.get().uri(urlEventos + "?page=1&per_page=" + POR_PAGINA)
-                : http.get().uri(urlEventos + "?filters={f}&page=1&per_page=" + POR_PAGINA, filtro);
+                ? http.get().uri(urlEventos + "?page=" + pagina + "&per_page=" + POR_PAGINA)
+                : http.get().uri(urlEventos + "?filters={f}&page=" + pagina + "&per_page=" + POR_PAGINA, filtro);
         JsonNode corpo = pedido
                 .header("Authorization", "Bearer " + tokenValido())
                 .accept(MediaType.APPLICATION_JSON)
@@ -287,6 +346,7 @@ public class AutoIspClient {
                 textoDe(bruto, "eventType", "event_type", "type"),
                 textoDe(bruto, "adminStatus", "admin_status"),
                 textoDe(bruto, "startAt", "start_at"),
+                textoDe(bruto, "endAt", "end_at"),
                 recursos);
     }
 

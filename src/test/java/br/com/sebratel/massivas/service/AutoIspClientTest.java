@@ -151,10 +151,41 @@ class AutoIspClientTest {
         assertThrows(AutoIspClient.IndisponivelException.class, c::eventosAtivos);
     }
 
+    private static String encerrado(long id, String inicio, String fim, long contrato) {
+        return "{\"id\":" + id + ",\"event_type\":\"olt_down\",\"admin_status\":\"closed\",\"start_at\":\"" + inicio
+                + "\",\"end_at\":\"" + fim + "\",\"resources\":[{\"contract_id\":" + contrato + "}]}";
+    }
+
+    @Test
+    @DisplayName("Encerrados: so os que terminaram dentro da janela, com e sem fuso na data")
+    void encerradosNaJanela() {
+        AutoIspClient c = cliente("api@exemplo", "segredo", 30);
+        esperaLogin(ExpectedCount.once());
+        var agora = java.time.Instant.now();
+        var recente = agora.minusSeconds(3600).toString();
+        var antigo = agora.minusSeconds(48 * 3600).toString();
+        var semFuso = java.time.LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo")).minusHours(2).toString();
+        esperaEventos("closed", "{\"data\":[" + encerrado(1, antigo, recente, 10) + ","
+                + encerrado(2, antigo, antigo, 10) + "," + encerrado(3, antigo, semFuso, 20) + "]}");
+
+        var lista = c.eventosEncerradosDesde(agora.minusSeconds(6 * 3600));
+
+        assertEquals(List.of(1L, 3L), lista.stream().map(AutoIspClient.Evento::id).toList());
+        assertEquals(recente, lista.get(0).fim());
+    }
+
+    @Test
+    @DisplayName("Data sem formato conhecido nao entra na janela")
+    void dataInvalida() {
+        assertEquals(null, AutoIspClient.instante("ontem"));
+        assertEquals(null, AutoIspClient.instante(" "));
+        assertTrue(AutoIspClient.instante("2026-10-30 10:00:00") != null);
+    }
+
     @Test
     @DisplayName("Conta so os contratos do cliente citados pelo evento")
     void contratosAfetados() {
-        var evento = new AutoIspClient.Evento(1, "olt_down", "new", null, List.of(
+        var evento = new AutoIspClient.Evento(1, "olt_down", "new", null, null, List.of(
                 new AutoIspClient.Recurso(10L, "a"), new AutoIspClient.Recurso(10L, "b"),
                 new AutoIspClient.Recurso(30L, "c"), new AutoIspClient.Recurso(null, "d")));
 
