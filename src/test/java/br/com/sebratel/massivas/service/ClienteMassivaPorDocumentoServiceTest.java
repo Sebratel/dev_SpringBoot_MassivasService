@@ -1,5 +1,6 @@
 package br.com.sebratel.massivas.service;
 
+import br.com.sebratel.massivas.dto.AutoIspSituacaoDTO;
 import br.com.sebratel.massivas.dto.ClienteMassivaPorTelefoneOutputDTO;
 import br.com.sebratel.massivas.dto.massivas.ImpactDetailsOutputDTO;
 import br.com.sebratel.massivas.dto.massivas.ImpactedUsersOutputDTO;
@@ -17,6 +18,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -27,13 +29,15 @@ class ClienteMassivaPorDocumentoServiceTest {
 
     private ClientePorDocumentoRepository repositorio;
     private AffectedUserService afetados;
+    private AutoIspService autoIsp;
     private ClienteMassivaPorDocumentoService servico;
 
     @BeforeEach
     void setUp() {
         repositorio = mock(ClientePorDocumentoRepository.class);
         afetados = mock(AffectedUserService.class);
-        var porTelefone = new ClienteMassivaPorTelefoneService(mock(ClientePorTelefoneRepository.class), afetados, 5);
+        autoIsp = mock(AutoIspService.class);
+        var porTelefone = new ClienteMassivaPorTelefoneService(mock(ClientePorTelefoneRepository.class), afetados, 5, autoIsp);
         servico = new ClienteMassivaPorDocumentoService(repositorio, porTelefone);
     }
 
@@ -80,6 +84,36 @@ class ClienteMassivaPorDocumentoServiceTest {
         assertEquals(ClienteMassivaPorTelefoneOutputDTO.EM_MASSIVA, r.getStatus());
         assertEquals("Rompimento de fibra", r.getMotivo());
         assertEquals(3L, r.getPrevisaoHoras());
+    }
+
+    @Test
+    @DisplayName("Evento do AutoISP nos contratos acende em_autoisp, mesmo sem massiva")
+    void alteracaoDeRedeNoAutoIsp() {
+        when(repositorio.buscarPorDocumento("12345678901")).thenReturn(List.of(new ClienteContrato(1L, 10L)));
+        when(afetados.getUsuariosAfetadosByContractId(10L)).thenThrow(new ResourceNotFoundException("nao"));
+        when(autoIsp.situacao(List.of(10L))).thenReturn(AutoIspSituacaoDTO.builder().disponivel(true)
+                .eventos(List.of(AutoIspSituacaoDTO.Evento.builder().id(7L).tipo("olt_down").status("open")
+                        .contratosAfetados(1L).build()))
+                .build());
+
+        var r = servico.consultar("12345678901");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA, r.getStatus());
+        assertFalse(r.isEmMassiva());
+        assertTrue(r.isEmAutoisp());
+        assertEquals("olt_down", r.getAutoisp().getEventos().get(0).getTipo());
+    }
+
+    @Test
+    @DisplayName("AutoISP nao configurado: sem bloco autoisp e em_autoisp falso")
+    void autoIspNaoConfigurado() {
+        when(repositorio.buscarPorDocumento("12345678901")).thenReturn(List.of(new ClienteContrato(1L, 10L)));
+        when(afetados.getUsuariosAfetadosByContractId(10L)).thenThrow(new ResourceNotFoundException("nao"));
+
+        var r = servico.consultar("12345678901");
+
+        assertFalse(r.isEmAutoisp());
+        assertNull(r.getAutoisp());
     }
 
     @Test

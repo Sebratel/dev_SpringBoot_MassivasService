@@ -28,13 +28,16 @@ public class ClienteMassivaPorTelefoneService {
     private final AffectedUserService affectedUserService;
 
     private final int limiteClientesPorTelefone;
+    private final AutoIspService autoIspService;
 
     public ClienteMassivaPorTelefoneService(ClientePorTelefoneRepository clientePorTelefoneRepository,
                                             AffectedUserService affectedUserService,
-                                            @Value("${matrix.telefone.max-clientes:5}") int limiteClientesPorTelefone) {
+                                            @Value("${matrix.telefone.max-clientes:5}") int limiteClientesPorTelefone,
+                                            AutoIspService autoIspService) {
         this.clientePorTelefoneRepository = clientePorTelefoneRepository;
         this.affectedUserService = affectedUserService;
         this.limiteClientesPorTelefone = limiteClientesPorTelefone;
+        this.autoIspService = autoIspService;
     }
 
     public ClienteMassivaPorTelefoneOutputDTO consultar(String telefone) {
@@ -79,7 +82,9 @@ public class ClienteMassivaPorTelefoneService {
                 .toList();
         log.info("{} contrato(s) consultados, {} em massiva", vinculos.size(), emMassiva.size());
 
-        var saida = base.contratosConsultados(vinculos.size());
+        var autoisp = autoIspService.situacao(vinculos.stream().map(ClienteContrato::contratoId).distinct().toList());
+        boolean emAutoisp = autoisp != null && autoisp.getEventos() != null && !autoisp.getEventos().isEmpty();
+        var saida = base.contratosConsultados(vinculos.size()).autoisp(autoisp).emAutoisp(emAutoisp);
         if (emMassiva.isEmpty()) {
             return saida.status(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA).build();
         }
