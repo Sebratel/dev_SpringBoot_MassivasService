@@ -29,7 +29,8 @@ public class AutoIspService {
         }
         Set<Long> meus = Set.copyOf(contratos);
         try {
-            var eventos = client.eventosAtivos().stream()
+            var ativos = client.eventosAtivos();
+            var eventos = ativos.stream()
                     .filter(e -> AutoIspClient.contratosAfetados(e, meus) > 0)
                     .map(e -> AutoIspSituacaoDTO.Evento.builder()
                             .id(e.id())
@@ -39,8 +40,10 @@ public class AutoIspService {
                             .contratosAfetados(AutoIspClient.contratosAfetados(e, meus))
                             .build())
                     .collect(Collectors.toList());
-            log.info("AutoISP: {} evento(s) ativos nos {} contrato(s) consultados", eventos.size(), meus.size());
-            return AutoIspSituacaoDTO.builder().disponivel(true).eventos(eventos).build();
+            log.info("AutoISP: {} evento(s) ativos no total, {} nos {} contrato(s) consultados", ativos.size(),
+                    eventos.size(), meus.size());
+            return AutoIspSituacaoDTO.builder().disponivel(true).ativosNoAutoisp(ativos.size()).eventos(eventos)
+                    .build();
         } catch (AutoIspClient.IndisponivelException e) {
             log.warn("AutoISP indisponivel: {}", e.getMessage());
             return AutoIspSituacaoDTO.builder().disponivel(false).build();

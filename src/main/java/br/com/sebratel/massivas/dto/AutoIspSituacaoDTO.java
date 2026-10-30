@@ -20,6 +20,10 @@ public class AutoIspSituacaoDTO {
     @JsonProperty("disponivel")
     private boolean disponivel;
 
+    /** Quantos eventos ativos o AutoISP tem no total (so para conferir que a lista veio; nao e do cliente). */
+    @JsonProperty("ativos_no_autoisp")
+    private Integer ativosNoAutoisp;
+
     @JsonProperty("eventos")
     private List<Evento> eventos;
 
