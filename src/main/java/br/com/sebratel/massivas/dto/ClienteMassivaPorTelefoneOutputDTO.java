@@ -60,6 +60,13 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     @JsonProperty("autoisp")
     private AutoIspSituacaoDTO autoisp;
 
+    /** Massivas abertas ou encerradas nas ultimas {@code historico_horas} horas que atingiram contratos do cliente. */
+    @JsonProperty("historico")
+    private List<HistoricoMassivaDTO> historico;
+
+    @JsonProperty("historico_horas")
+    private Integer historicoHoras;
+
     @JsonProperty("motivo")
     private String motivo;
 

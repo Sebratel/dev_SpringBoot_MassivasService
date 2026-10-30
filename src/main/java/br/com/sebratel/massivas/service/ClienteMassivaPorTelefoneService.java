@@ -29,15 +29,18 @@ public class ClienteMassivaPorTelefoneService {
 
     private final int limiteClientesPorTelefone;
     private final AutoIspService autoIspService;
+    private final HistoricoMassivaService historicoService;
 
     public ClienteMassivaPorTelefoneService(ClientePorTelefoneRepository clientePorTelefoneRepository,
                                             AffectedUserService affectedUserService,
                                             @Value("${matrix.telefone.max-clientes:5}") int limiteClientesPorTelefone,
-                                            AutoIspService autoIspService) {
+                                            AutoIspService autoIspService,
+                                            HistoricoMassivaService historicoService) {
         this.clientePorTelefoneRepository = clientePorTelefoneRepository;
         this.affectedUserService = affectedUserService;
         this.limiteClientesPorTelefone = limiteClientesPorTelefone;
         this.autoIspService = autoIspService;
+        this.historicoService = historicoService;
     }
 
     public ClienteMassivaPorTelefoneOutputDTO consultar(String telefone) {
@@ -82,9 +85,11 @@ public class ClienteMassivaPorTelefoneService {
                 .toList();
         log.info("{} contrato(s) consultados, {} em massiva", vinculos.size(), emMassiva.size());
 
-        var autoisp = autoIspService.situacao(vinculos.stream().map(ClienteContrato::contratoId).distinct().toList());
+        var contratos = vinculos.stream().map(ClienteContrato::contratoId).distinct().toList();
+        var autoisp = autoIspService.situacao(contratos);
         boolean emAutoisp = autoisp != null && autoisp.getEventos() != null && !autoisp.getEventos().isEmpty();
-        var saida = base.contratosConsultados(vinculos.size()).autoisp(autoisp).emAutoisp(emAutoisp);
+        var saida = base.contratosConsultados(vinculos.size()).autoisp(autoisp).emAutoisp(emAutoisp)
+                .historico(historicoService.recentes(contratos)).historicoHoras(historicoService.horas());
         if (emMassiva.isEmpty()) {
             return saida.status(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA).build();
         }
