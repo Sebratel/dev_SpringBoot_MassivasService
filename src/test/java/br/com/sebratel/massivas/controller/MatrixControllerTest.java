@@ -4,6 +4,7 @@ import br.com.sebratel.massivas.BaseTest;
 import br.com.sebratel.massivas.dto.ClienteMassivaPorTelefoneOutputDTO;
 import br.com.sebratel.massivas.dto.MatrixMassiveInputDTO;
 import br.com.sebratel.massivas.dto.MatrixMassiveOutputDTO;
+import br.com.sebratel.massivas.service.ClienteMassivaPorDocumentoService;
 import br.com.sebratel.massivas.service.ClienteMassivaPorTelefoneService;
 import br.com.sebratel.massivas.service.MatrixService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +40,9 @@ class MatrixControllerTest extends BaseTest {
     @MockitoBean
     private ClienteMassivaPorTelefoneService clienteMassivaPorTelefoneService;
 
+    @MockitoBean
+    private ClienteMassivaPorDocumentoService clienteMassivaPorDocumentoService;
+
     @Test
     @DisplayName("POST /telefone devolve a situacao de massiva de quem ligou")
     void getMassiveInfoByPhoneSuccess() throws Exception {
@@ -68,6 +72,34 @@ class MatrixControllerTest extends BaseTest {
         mockMvc.perform(post("/api/v1/matrix/telefone")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"telefone\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /documento devolve a situacao de massiva do CPF/CNPJ")
+    void getMassiveInfoByDocumentSuccess() throws Exception {
+        when(clienteMassivaPorDocumentoService.consultar("123.456.789-01")).thenReturn(
+                ClienteMassivaPorTelefoneOutputDTO.builder()
+                        .status(ClienteMassivaPorTelefoneOutputDTO.EM_MASSIVA)
+                        .emMassiva(true)
+                        .documento("123******01")
+                        .motivo("Rompimento de fibra")
+                        .build());
+
+        mockMvc.perform(post("/api/v1/matrix/documento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"documento\":\"123.456.789-01\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("em_massiva"))
+                .andExpect(jsonPath("$.data.documento").value("123******01"));
+    }
+
+    @Test
+    @DisplayName("POST /documento sem documento responde 400")
+    void getMassiveInfoByDocumentBlank() throws Exception {
+        mockMvc.perform(post("/api/v1/matrix/documento")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"documento\":\"\"}"))
                 .andExpect(status().isBadRequest());
     }
 
