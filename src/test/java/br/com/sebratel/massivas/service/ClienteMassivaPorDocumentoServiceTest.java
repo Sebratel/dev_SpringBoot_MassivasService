@@ -37,7 +37,8 @@ class ClienteMassivaPorDocumentoServiceTest {
         repositorio = mock(ClientePorDocumentoRepository.class);
         afetados = mock(AffectedUserService.class);
         autoIsp = mock(AutoIspService.class);
-        var porTelefone = new ClienteMassivaPorTelefoneService(mock(ClientePorTelefoneRepository.class), afetados, 5, autoIsp);
+        var porTelefone = new ClienteMassivaPorTelefoneService(mock(ClientePorTelefoneRepository.class), afetados, 5, autoIsp,
+                mock(HistoricoMassivaService.class));
         servico = new ClienteMassivaPorDocumentoService(repositorio, porTelefone);
     }
 

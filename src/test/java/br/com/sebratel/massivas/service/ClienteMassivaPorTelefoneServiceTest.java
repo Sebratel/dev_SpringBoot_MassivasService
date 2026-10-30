@@ -40,7 +40,8 @@ class ClienteMassivaPorTelefoneServiceTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5, mock(AutoIspService.class));
+        service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5, mock(AutoIspService.class),
+                mock(HistoricoMassivaService.class));
     }
 
     @Test
@@ -92,6 +93,27 @@ class ClienteMassivaPorTelefoneServiceTest {
         assertEquals(1, saida.getClientesEncontrados());
         assertEquals(1, saida.getContratosConsultados());
         assertNull(saida.getContratosEmMassiva());
+    }
+
+    @Test
+    void semMassivaAtivaTrazAsMassivasRecentesDoCliente() {
+        var historico = mock(HistoricoMassivaService.class);
+        var passada = br.com.sebratel.massivas.dto.HistoricoMassivaDTO.builder().protocolo(77L).status("encerrada")
+                .build();
+        when(historico.recentes(List.of(100L))).thenReturn(List.of(passada));
+        when(historico.horas()).thenReturn(6);
+        var servico = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5,
+                mock(AutoIspService.class), historico);
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(new ClienteContrato(1L, 100L)));
+        when(affectedUserService.getUsuariosAfetadosByContractId(100L))
+                .thenThrow(new ResourceNotFoundException("Usuário afetado não encontrado"));
+
+        var saida = servico.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA, saida.getStatus());
+        assertEquals(1, saida.getHistorico().size());
+        assertEquals(77L, saida.getHistorico().get(0).getProtocolo());
+        assertEquals(6, saida.getHistoricoHoras());
     }
 
     @Test
