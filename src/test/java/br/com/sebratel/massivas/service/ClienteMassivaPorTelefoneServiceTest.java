@@ -1,0 +1,138 @@
+package br.com.sebratel.massivas.service;
+
+import br.com.sebratel.massivas.dto.ClienteMassivaPorTelefoneOutputDTO;
+import br.com.sebratel.massivas.dto.massivas.ImpactDetailsOutputDTO;
+import br.com.sebratel.massivas.dto.massivas.ImpactedUsersOutputDTO;
+import br.com.sebratel.massivas.exceptions.InvalidMassiveRequestException;
+import br.com.sebratel.massivas.exceptions.ResourceNotFoundException;
+import br.com.sebratel.massivas.repository.erp.ClientePorTelefoneRepository;
+import br.com.sebratel.massivas.repository.erp.ClientePorTelefoneRepository.ClienteContrato;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ClienteMassivaPorTelefoneServiceTest {
+
+    @Mock
+    private ClientePorTelefoneRepository repository;
+
+    @Mock
+    private AffectedUserService affectedUserService;
+
+    private ClienteMassivaPorTelefoneService service;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5);
+    }
+
+    @Test
+    void telefoneEmMuitosClientesNaoIdentificaQuemLigou() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(
+                new ClienteContrato(1L, 10L), new ClienteContrato(2L, 20L), new ClienteContrato(3L, 30L),
+                new ClienteContrato(4L, 40L), new ClienteContrato(5L, 50L), new ClienteContrato(6L, 60L)));
+
+        var saida = service.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.TELEFONE_COMPARTILHADO, saida.getStatus());
+        assertFalse(saida.isEmMassiva());
+        assertEquals(6, saida.getClientesEncontrados());
+        verifyNoInteractions(affectedUserService);
+    }
+
+    private ImpactedUsersOutputDTO impacto(Long contrato, String motivo, long horas, long hora) {
+        return ImpactedUsersOutputDTO.builder()
+                .impactedUsers(List.of(Map.of(contrato, ImpactDetailsOutputDTO.builder()
+                        .reason(motivo)
+                        .estimateTimeOfRestoration(horas)
+                        .estimatedTimeHour(hora)
+                        .build())))
+                .build();
+    }
+
+    @Test
+    void telefoneSemClienteNoErpRetornaClienteNaoEncontrado() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of());
+
+        var saida = service.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_NAO_ENCONTRADO, saida.getStatus());
+        assertFalse(saida.isEmMassiva());
+        assertEquals("51*******11", saida.getTelefone());
+        verifyNoInteractions(affectedUserService);
+    }
+
+    @Test
+    void clienteSemContratoEmMassivaRetornaSemMassiva() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(new ClienteContrato(1L, 100L)));
+        when(affectedUserService.getUsuariosAfetadosByContractId(100L))
+                .thenThrow(new ResourceNotFoundException("Usuário afetado não encontrado"));
+
+        var saida = service.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA, saida.getStatus());
+        assertFalse(saida.isEmMassiva());
+        assertEquals(1, saida.getClientesEncontrados());
+        assertEquals(1, saida.getContratosConsultados());
+        assertNull(saida.getContratosEmMassiva());
+    }
+
+    @Test
+    void contratoEmMassivaRetornaMotivoEPrevisao() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(new ClienteContrato(1L, 100L)));
+        when(affectedUserService.getUsuariosAfetadosByContractId(100L)).thenReturn(impacto(100L, "Rompimento de fibra", 3, 18));
+
+        var saida = service.consultar("(51) 99566-4811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.EM_MASSIVA, saida.getStatus());
+        assertTrue(saida.isEmMassiva());
+        assertEquals("Rompimento de fibra", saida.getMotivo());
+        assertEquals(3L, saida.getPrevisaoHoras());
+        assertEquals(18L, saida.getPrevisaoHora());
+        assertEquals(1, saida.getContratosEmMassiva().size());
+        assertEquals(100L, saida.getContratosEmMassiva().get(0).getContratoId());
+    }
+
+    @Test
+    void variosContratosVarreTodosEUsaAMenorPrevisao() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(
+                new ClienteContrato(1L, 100L), new ClienteContrato(1L, 101L), new ClienteContrato(2L, 200L)));
+        when(affectedUserService.getUsuariosAfetadosByContractId(100L))
+                .thenThrow(new ResourceNotFoundException("não encontrado"));
+        when(affectedUserService.getUsuariosAfetadosByContractId(101L)).thenReturn(impacto(101L, "Queda de energia", 5, 20));
+        when(affectedUserService.getUsuariosAfetadosByContractId(200L)).thenReturn(impacto(200L, "Rompimento de fibra", 2, 17));
+
+        var saida = service.consultar("51995664811");
+
+        assertEquals(2, saida.getClientesEncontrados());
+        assertEquals(3, saida.getContratosConsultados());
+        assertEquals(2, saida.getContratosEmMassiva().size());
+        assertEquals(2L, saida.getPrevisaoHoras());
+        assertEquals("Rompimento de fibra", saida.getMotivo());
+    }
+
+    @Test
+    void consultaOErpComAsVariantesComENoveDigito() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of());
+
+        service.consultar("+55 51 99566-4811");
+
+        verify(repository).buscarPorVariantes(Set.of("51995664811", "5195664811"));
+    }
+
+    @Test
+    void telefoneInvalidoNaoConsultaOErp() {
+        assertThrows(InvalidMassiveRequestException.class, () -> service.consultar("1234"));
+        verifyNoInteractions(repository, affectedUserService);
+    }
+}
