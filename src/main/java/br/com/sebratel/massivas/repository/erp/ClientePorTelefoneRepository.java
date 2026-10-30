@@ -45,6 +45,21 @@ public class ClientePorTelefoneRepository {
     public record ClienteContrato(Long clienteId, Long contratoId) {
     }
 
+    /** Telefones, como cadastrados, de todas as colunas de telefone dos clientes (erp.people.id). */
+    @Transactional(readOnly = true, transactionManager = "erpTransactionManager")
+    @SuppressWarnings("unchecked")
+    public List<String> telefonesDosClientes(Collection<Long> clienteIds) {
+        List<String> brutos = new ArrayList<>();
+        for (String coluna : colunas) {
+            List<Object> linhas = entityManager.createNativeQuery(
+                            "SELECT p." + coluna + "::text FROM erp.people p WHERE p.id IN (:ids)")
+                    .setParameter("ids", clienteIds)
+                    .getResultList();
+            linhas.stream().filter(java.util.Objects::nonNull).map(Object::toString).forEach(brutos::add);
+        }
+        return brutos;
+    }
+
     @Transactional(readOnly = true, transactionManager = "erpTransactionManager")
     @SuppressWarnings("unchecked")
     public List<ClienteContrato> buscarPorVariantes(Collection<String> variantes) {

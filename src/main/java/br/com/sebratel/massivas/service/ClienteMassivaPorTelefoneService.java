@@ -31,17 +31,20 @@ public class ClienteMassivaPorTelefoneService {
     private final int limiteClientesPorTelefone;
     private final AutoIspService autoIspService;
     private final HistoricoMassivaService historicoService;
+    private final PerfilClienteService perfilService;
 
     public ClienteMassivaPorTelefoneService(ClientePorTelefoneRepository clientePorTelefoneRepository,
                                             AffectedUserService affectedUserService,
                                             @Value("${matrix.telefone.max-clientes:5}") int limiteClientesPorTelefone,
                                             AutoIspService autoIspService,
-                                            HistoricoMassivaService historicoService) {
+                                            HistoricoMassivaService historicoService,
+                                            PerfilClienteService perfilService) {
         this.clientePorTelefoneRepository = clientePorTelefoneRepository;
         this.affectedUserService = affectedUserService;
         this.limiteClientesPorTelefone = limiteClientesPorTelefone;
         this.autoIspService = autoIspService;
         this.historicoService = historicoService;
+        this.perfilService = perfilService;
     }
 
     public ClienteMassivaPorTelefoneOutputDTO consultar(String telefone) {
@@ -90,7 +93,8 @@ public class ClienteMassivaPorTelefoneService {
         var autoisp = autoIspService.situacao(contratos);
         boolean emAutoisp = autoisp != null && autoisp.getEventos() != null && !autoisp.getEventos().isEmpty();
         var saida = base.contratosConsultados(vinculos.size()).autoisp(autoisp).emAutoisp(emAutoisp)
-                .historico(historicoService.recentes(contratos)).historicoHoras(historicoService.horas());
+                .historico(historicoService.recentes(contratos)).historicoHoras(historicoService.horas())
+                .perfil(perfilService.perfil(vinculos));
         if (emMassiva.isEmpty()) {
             return saida.status(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA).build();
         }

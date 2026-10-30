@@ -75,6 +75,10 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     @JsonProperty("historico_horas")
     private Integer historicoHoras;
 
+    /** Cadastro (people/contratos/telefones) e participacao em massivas, para o resumo de recorrencia. */
+    @JsonProperty("perfil")
+    private PerfilClienteDTO perfil;
+
     @JsonProperty("motivo")
     private String motivo;
 
