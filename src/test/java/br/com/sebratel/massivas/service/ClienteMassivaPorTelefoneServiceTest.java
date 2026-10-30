@@ -96,6 +96,29 @@ class ClienteMassivaPorTelefoneServiceTest {
     }
 
     @Test
+    void previsaoVemComDataExataEIndicaQuandoJaVenceu() {
+        var amanha = java.time.LocalDateTime.now().plusDays(1).withHour(23).withMinute(0).withSecond(0).withNano(0);
+        var ontem = java.time.LocalDateTime.now().minusDays(1).withHour(23).withMinute(0).withSecond(0).withNano(0);
+        when(repository.buscarPorVariantes(anyCollection()))
+                .thenReturn(List.of(new ClienteContrato(1L, 100L), new ClienteContrato(1L, 200L)));
+        when(affectedUserService.getUsuariosAfetadosByContractId(100L)).thenReturn(ImpactedUsersOutputDTO.builder()
+                .impactedUsers(List.of(Map.of(100L, ImpactDetailsOutputDTO.builder().reason("a")
+                        .estimateTimeOfRestoration(30L).estimatedTimeHour(23L).estimatedFinish(amanha).build())))
+                .build());
+        when(affectedUserService.getUsuariosAfetadosByContractId(200L)).thenReturn(ImpactedUsersOutputDTO.builder()
+                .impactedUsers(List.of(Map.of(200L, ImpactDetailsOutputDTO.builder().reason("b")
+                        .estimateTimeOfRestoration(1L).estimatedTimeHour(23L).estimatedFinish(ontem).build())))
+                .build());
+
+        var saida = service.consultar("51995664811");
+
+        assertEquals(ontem.toString(), saida.getPrevisaoEm());
+        assertTrue(saida.getPrevisaoVencida());
+        assertEquals(amanha.toString(), saida.getContratosEmMassiva().get(1).getPrevisaoEm());
+        assertFalse(saida.getContratosEmMassiva().get(1).getPrevisaoVencida());
+    }
+
+    @Test
     void semMassivaAtivaTrazAsMassivasRecentesDoCliente() {
         var historico = mock(HistoricoMassivaService.class);
         var passada = br.com.sebratel.massivas.dto.HistoricoMassivaDTO.builder().protocolo(77L).status("encerrada")

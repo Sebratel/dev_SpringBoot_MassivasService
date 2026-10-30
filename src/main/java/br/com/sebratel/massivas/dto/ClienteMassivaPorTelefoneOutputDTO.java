@@ -52,6 +52,14 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     @JsonProperty("previsao_hora")
     private Long previsaoHora;
 
+    /** Data e hora locais da previsao (ISO-8601 sem fuso), do contrato com menor previsao. */
+    @JsonProperty("previsao_em")
+    private String previsaoEm;
+
+    /** A previsao ja passou e a massiva segue aberta: "previsao_horas" e so um piso de 1 hora. */
+    @JsonProperty("previsao_vencida")
+    private Boolean previsaoVencida;
+
     /** Ha evento de rede ativo no AutoISP atingindo contrato do cliente (independe de massiva). */
     @JsonProperty("em_autoisp")
     private boolean emAutoisp;
@@ -86,5 +94,9 @@ public class ClienteMassivaPorTelefoneOutputDTO {
         private Long previsaoHoras;
         @JsonProperty("previsao_hora")
         private Long previsaoHora;
+        @JsonProperty("previsao_em")
+        private String previsaoEm;
+        @JsonProperty("previsao_vencida")
+        private Boolean previsaoVencida;
     }
 }
