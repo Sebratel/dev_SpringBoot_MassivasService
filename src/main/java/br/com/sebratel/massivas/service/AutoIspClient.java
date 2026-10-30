@@ -29,6 +29,9 @@ public class AutoIspClient {
 
     /** Status que contam como alteracao de rede em andamento. */
     static final List<String> STATUS_ATIVOS = List.of("new", "acknowledged", "open", "in_progress");
+    /** Se nenhum evento vier com os status acima, a API pode estar usando outra caixa/nome (como o Splitters tenta). */
+    static final List<String> STATUS_ALTERNATIVOS = List.of("NEW", "OPEN", "IN_PROGRESS", "ACKNOWLEDGED", "PENDING",
+            "ACTIVE");
 
     private static final List<String> CHAVES_LISTA = List.of("data", "items", "list", "results", "events", "records",
             "content", "massives", "massive_events", "rows");
@@ -104,29 +107,50 @@ public class AutoIspClient {
             return cache;
         }
         Map<Long, Evento> unicos = new LinkedHashMap<>();
-        int falhas = 0;
-        for (String status : STATUS_ATIVOS) {
+        int falhas = juntar(STATUS_ATIVOS, unicos);
+        if (falhas == STATUS_ATIVOS.size()) {
+            throw new IndisponivelException("AutoISP indisponivel");
+        }
+        if (unicos.isEmpty()) {
+            juntar(STATUS_ALTERNATIVOS, unicos);
+        }
+        if (unicos.isEmpty()) {
             try {
-                for (Evento e : eventosComStatus(status)) {
+                for (Evento e : eventos(null)) {
                     unicos.putIfAbsent(e.id(), e);
                 }
             } catch (RuntimeException e) {
-                falhas++;
-                log.warn("AutoISP: falha ao listar eventos com status {}: {}", status, e.getMessage());
+                log.warn("AutoISP: falha na listagem sem filtro: {}", e.getMessage());
             }
-        }
-        if (falhas == STATUS_ATIVOS.size()) {
-            throw new IndisponivelException("AutoISP indisponivel");
         }
         cache = List.copyOf(unicos.values());
         cacheAte = Instant.now().plus(validadeCache);
         return cache;
     }
 
-    private List<Evento> eventosComStatus(String status) {
+    /** Junta em {@code destino} os eventos de cada status; devolve quantos status falharam. */
+    private int juntar(List<String> statuses, Map<Long, Evento> destino) {
+        int falhas = 0;
+        for (String status : statuses) {
+            try {
+                for (Evento e : eventos(status)) {
+                    destino.putIfAbsent(e.id(), e);
+                }
+            } catch (RuntimeException e) {
+                falhas++;
+                log.warn("AutoISP: falha ao listar eventos com status {}: {}", status, e.getMessage());
+            }
+        }
+        return falhas;
+    }
+
+    /** Eventos com o status administrativo dado, ou todos (sem filtro) quando {@code status} e null. */
+    private List<Evento> eventos(String status) {
         String filtro = "[{\"field\":\"admin_status\",\"op\":\"==\",\"value\":\"" + status + "\"}]";
-        JsonNode corpo = http.get()
-                .uri(urlEventos + "?filters={f}&page=1&per_page=" + POR_PAGINA, filtro)
+        RestClient.RequestHeadersSpec<?> pedido = status == null
+                ? http.get().uri(urlEventos + "?page=1&per_page=" + POR_PAGINA)
+                : http.get().uri(urlEventos + "?filters={f}&page=1&per_page=" + POR_PAGINA, filtro);
+        JsonNode corpo = pedido
                 .header("Authorization", "Bearer " + tokenValido())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()

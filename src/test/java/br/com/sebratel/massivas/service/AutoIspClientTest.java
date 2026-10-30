@@ -86,6 +86,47 @@ class AutoIspClientTest {
     }
 
     @Test
+    @DisplayName("Sem eventos nos status em minusculas, tenta em maiusculas")
+    void fallbackParaMaiusculas() {
+        AutoIspClient c = cliente("api@exemplo", "segredo", 30);
+        esperaLogin(ExpectedCount.once());
+        for (String s : List.of("new", "acknowledged", "open", "in_progress")) {
+            esperaEventos(s, "{\"data\":[]}");
+        }
+        servidor.expect(requestTo(org.hamcrest.Matchers.containsString("NEW")))
+                .andRespond(withSuccess("{\"data\":[" + evento(5, "olt_down", "NEW", 10) + "]}", MediaType.APPLICATION_JSON));
+        for (String s : List.of("OPEN", "IN_PROGRESS", "ACKNOWLEDGED", "PENDING", "ACTIVE")) {
+            servidor.expect(requestTo(org.hamcrest.Matchers.containsString(s)))
+                    .andRespond(withSuccess("{\"data\":[]}", MediaType.APPLICATION_JSON));
+        }
+
+        List<AutoIspClient.Evento> eventos = c.eventosAtivos();
+
+        assertEquals(1, eventos.size());
+        assertEquals(5L, eventos.get(0).id());
+    }
+
+    @Test
+    @DisplayName("Sem eventos em nenhum status, lista sem filtro")
+    void fallbackSemFiltro() {
+        AutoIspClient c = cliente("api@exemplo", "segredo", 30);
+        esperaLogin(ExpectedCount.once());
+        for (String s : List.of("new", "acknowledged", "open", "in_progress", "NEW", "OPEN", "IN_PROGRESS",
+                "ACKNOWLEDGED", "PENDING", "ACTIVE")) {
+            servidor.expect(requestTo(org.hamcrest.Matchers.containsString("filters=") ))
+                    .andExpect(requestTo(org.hamcrest.Matchers.containsString(s)))
+                    .andRespond(withSuccess("{\"data\":[]}", MediaType.APPLICATION_JSON));
+        }
+        servidor.expect(requestTo(EVENTOS + "?page=1&per_page=1000"))
+                .andRespond(withSuccess("{\"data\":[" + evento(6, "port_down", "open", 20) + "]}", MediaType.APPLICATION_JSON));
+
+        List<AutoIspClient.Evento> eventos = c.eventosAtivos();
+
+        assertEquals(1, eventos.size());
+        assertEquals(6L, eventos.get(0).id());
+    }
+
+    @Test
     @DisplayName("A segunda chamada dentro do cache nao vai ao AutoISP")
     void usaCache() {
         AutoIspClient c = cliente("api@exemplo", "segredo", 60);
