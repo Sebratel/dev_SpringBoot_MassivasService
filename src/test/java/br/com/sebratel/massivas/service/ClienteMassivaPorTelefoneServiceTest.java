@@ -41,7 +41,7 @@ class ClienteMassivaPorTelefoneServiceTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5, mock(AutoIspService.class),
-                mock(HistoricoMassivaService.class));
+                mock(HistoricoMassivaService.class), mock(PerfilClienteService.class));
     }
 
     @Test
@@ -126,7 +126,7 @@ class ClienteMassivaPorTelefoneServiceTest {
         when(historico.recentes(List.of(100L))).thenReturn(List.of(passada));
         when(historico.horas()).thenReturn(6);
         var servico = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5,
-                mock(AutoIspService.class), historico);
+                mock(AutoIspService.class), historico, mock(PerfilClienteService.class));
         when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(new ClienteContrato(1L, 100L)));
         when(affectedUserService.getUsuariosAfetadosByContractId(100L))
                 .thenThrow(new ResourceNotFoundException("Usuário afetado não encontrado"));

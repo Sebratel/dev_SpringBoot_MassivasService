@@ -49,4 +49,23 @@ public interface MassivaHistoryJPARepository extends JpaRepository<MassivaHistor
             "ORDER BY h.opened_at DESC", nativeQuery = true)
     List<HistoricoClienteProjection> historicoDosContratos(@Param("contratos") Collection<Long> contratos,
                                                            @Param("desde") LocalDateTime desde);
+
+    /** Em quantas massivas distintas os contratos estiveram, abertas desde {@code desde}. */
+    @Query(value = "SELECT COUNT(DISTINCT h.id) FROM massiva_affected_clients ac " +
+            "JOIN massiva_history h ON h.id = ac.massiva_history_id " +
+            "WHERE ac.contract_id IN (:contratos) AND h.opened_at >= :desde", nativeQuery = true)
+    long contarDosContratos(@Param("contratos") Collection<Long> contratos, @Param("desde") LocalDateTime desde);
+
+    @Query(value = "SELECT MAX(h.opened_at) FROM massiva_affected_clients ac " +
+            "JOIN massiva_history h ON h.id = ac.massiva_history_id " +
+            "WHERE ac.contract_id IN (:contratos) AND h.opened_at >= :desde", nativeQuery = true)
+    java.sql.Timestamp ultimaAberturaDosContratos(@Param("contratos") Collection<Long> contratos,
+                                                  @Param("desde") LocalDateTime desde);
+
+    @Query(value = "SELECT h.title AS titulo, COUNT(DISTINCT h.id) AS vezes FROM massiva_affected_clients ac " +
+            "JOIN massiva_history h ON h.id = ac.massiva_history_id " +
+            "WHERE ac.contract_id IN (:contratos) AND h.opened_at >= :desde AND h.title IS NOT NULL " +
+            "GROUP BY h.title ORDER BY vezes DESC, h.title LIMIT 5", nativeQuery = true)
+    List<TituloFrequenteProjection> titulosFrequentesDosContratos(@Param("contratos") Collection<Long> contratos,
+                                                                  @Param("desde") LocalDateTime desde);
 }

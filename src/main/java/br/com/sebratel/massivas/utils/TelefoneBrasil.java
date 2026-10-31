@@ -46,6 +46,18 @@ public final class TelefoneBrasil {
         return variantes;
     }
 
+    /**
+     * Forma unica do telefone: DDD + numero (10 ou 11 digitos), sem +55, sem 0 de tronco, sem mascara. Vazio se o
+     * texto nao for um telefone com DDD (ex.: ramal, "anonymous", numero sem DDD).
+     */
+    public static java.util.Optional<String> canonico(String bruto) {
+        try {
+            return java.util.Optional.of(variantes(bruto).iterator().next());
+        } catch (InvalidMassiveRequestException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
     /** Mascara para log e resposta: mantem DDD e os 2 ultimos digitos. */
     public static String mascarar(String bruto) {
         String digitos = bruto == null ? "" : bruto.replaceAll("\\D", "");
