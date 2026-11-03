@@ -32,6 +32,13 @@ public class ClienteMassivaPorDocumentoService {
 
         List<ClienteContrato> vinculos = clientePorDocumentoRepository.buscarPorDocumento(digitos);
         if (vinculos.isEmpty()) {
+            // Sem contrato com conexao (ex.: so contratos cancelados): o ERP ainda tem o que dizer.
+            List<Long> semConexao = clientePorDocumentoRepository.clientesPorDocumento(digitos);
+            if (!semConexao.isEmpty()) {
+                log.info("Documento {} so em cliente(s) sem contrato com conexao ({})", mascarado, semConexao.size());
+                return massivaService.semConexao(semConexao,
+                        ClienteMassivaPorTelefoneOutputDTO.builder().documento(mascarado));
+            }
             log.info("Documento {} sem cliente com contrato no ERP", mascarado);
             return ClienteMassivaPorTelefoneOutputDTO.builder()
                     .status(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_NAO_ENCONTRADO)
@@ -42,6 +49,6 @@ public class ClienteMassivaPorDocumentoService {
         log.info("Documento {}: {} cliente(s), {} contrato(s)", mascarado, clientes, vinculos.size());
         return massivaService.avaliarMassiva(vinculos, ClienteMassivaPorTelefoneOutputDTO.builder()
                 .documento(mascarado)
-                .clientesEncontrados(clientes));
+                .clientesEncontrados(clientes), true);
     }
 }

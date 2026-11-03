@@ -16,6 +16,17 @@ public class ClientePorDocumentoRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /** Clientes (erp.people.id) com o CPF/CNPJ, com ou sem contrato com autenticacao (o cancelado perde a conexao). */
+    @Transactional(readOnly = true, transactionManager = "erpTransactionManager")
+    @SuppressWarnings("unchecked")
+    public List<Long> clientesPorDocumento(String digitos) {
+        List<Object> linhas = entityManager.createNativeQuery(
+                        "SELECT p.id FROM erp.people p WHERE p.tx_id::text = :documento ORDER BY p.id")
+                .setParameter("documento", digitos)
+                .getResultList();
+        return linhas.stream().map(o -> ((Number) o).longValue()).toList();
+    }
+
     @Transactional(readOnly = true, transactionManager = "erpTransactionManager")
     @SuppressWarnings("unchecked")
     public List<ClienteContrato> buscarPorDocumento(String digitos) {

@@ -38,7 +38,7 @@ class ClienteMassivaPorDocumentoServiceTest {
         afetados = mock(AffectedUserService.class);
         autoIsp = mock(AutoIspService.class);
         var porTelefone = new ClienteMassivaPorTelefoneService(mock(ClientePorTelefoneRepository.class), afetados, 5, autoIsp,
-                mock(HistoricoMassivaService.class), mock(PerfilClienteService.class));
+                mock(HistoricoMassivaService.class), mock(PerfilClienteService.class), mock(SituacaoErpService.class));
         servico = new ClienteMassivaPorDocumentoService(repositorio, porTelefone);
     }
 
@@ -122,5 +122,17 @@ class ClienteMassivaPorDocumentoServiceTest {
     void documentoInvalido() {
         assertThrows(InvalidMassiveRequestException.class, () -> servico.consultar("123"));
         verifyNoInteractions(repositorio);
+    }
+
+    @Test
+    @DisplayName("Documento so com contratos sem conexao (ex.: cancelados): cliente_sem_conexao com o ERP")
+    void semConexao() {
+        when(repositorio.buscarPorDocumento("12345678901")).thenReturn(List.of());
+        when(repositorio.clientesPorDocumento("12345678901")).thenReturn(List.of(5L));
+
+        var r = servico.consultar("12345678901");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_SEM_CONEXAO, r.getStatus());
+        assertEquals(1, r.getClientesEncontrados());
     }
 }

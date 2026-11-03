@@ -41,7 +41,7 @@ class ClienteMassivaPorTelefoneServiceTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         service = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5, mock(AutoIspService.class),
-                mock(HistoricoMassivaService.class), mock(PerfilClienteService.class));
+                mock(HistoricoMassivaService.class), mock(PerfilClienteService.class), mock(SituacaoErpService.class));
     }
 
     @Test
@@ -126,7 +126,7 @@ class ClienteMassivaPorTelefoneServiceTest {
         when(historico.recentes(List.of(100L))).thenReturn(List.of(passada));
         when(historico.horas()).thenReturn(6);
         var servico = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5,
-                mock(AutoIspService.class), historico, mock(PerfilClienteService.class));
+                mock(AutoIspService.class), historico, mock(PerfilClienteService.class), mock(SituacaoErpService.class));
         when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(new ClienteContrato(1L, 100L)));
         when(affectedUserService.getUsuariosAfetadosByContractId(100L))
                 .thenThrow(new ResourceNotFoundException("Usuário afetado não encontrado"));
@@ -186,5 +186,52 @@ class ClienteMassivaPorTelefoneServiceTest {
     void telefoneInvalidoNaoConsultaOErp() {
         assertThrows(InvalidMassiveRequestException.class, () -> service.consultar("1234"));
         verifyNoInteractions(repository, affectedUserService);
+    }
+
+    @Test
+    void clienteSoComContratosSemConexaoTrazOsBlocosDoErp() {
+        var erp = mock(SituacaoErpService.class);
+        var contratos = br.com.sebratel.massivas.dto.ContratosSituacaoDTO.builder().disponivel(true).totalContratos(1)
+                .problemas(List.of()).outros(0).build();
+        when(erp.situacaoContratos(List.of(7L))).thenReturn(contratos);
+        var servico = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5,
+                mock(AutoIspService.class), mock(HistoricoMassivaService.class), mock(PerfilClienteService.class), erp);
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of());
+        when(repository.clientesPorVariantes(anyCollection())).thenReturn(List.of(7L));
+
+        var saida = servico.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_SEM_CONEXAO, saida.getStatus());
+        assertFalse(saida.isEmMassiva());
+        assertEquals(contratos, saida.getContratosSituacao());
+        verifyNoInteractions(affectedUserService);
+    }
+
+    @Test
+    void telefoneSemNenhumClienteContinuaNaoEncontrado() {
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of());
+        when(repository.clientesPorVariantes(anyCollection())).thenReturn(List.of());
+
+        var saida = service.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_NAO_ENCONTRADO, saida.getStatus());
+    }
+
+    @Test
+    void telefoneDeMaisDeUmClienteNaoMostraBlocosDoErp() {
+        var erp = mock(SituacaoErpService.class);
+        var servico = new ClienteMassivaPorTelefoneService(repository, affectedUserService, 5,
+                mock(AutoIspService.class), mock(HistoricoMassivaService.class), mock(PerfilClienteService.class), erp);
+        when(repository.buscarPorVariantes(anyCollection())).thenReturn(List.of(
+                new ClienteContrato(1L, 10L), new ClienteContrato(2L, 20L)));
+        when(affectedUserService.getUsuariosAfetadosByContractId(org.mockito.ArgumentMatchers.anyLong()))
+                .thenThrow(new ResourceNotFoundException("nao"));
+
+        var saida = servico.consultar("51995664811");
+
+        assertEquals(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA, saida.getStatus());
+        assertEquals(null, saida.getContratosSituacao());
+        assertEquals(null, saida.getProtocolosErp());
+        org.mockito.Mockito.verifyNoInteractions(erp);
     }
 }

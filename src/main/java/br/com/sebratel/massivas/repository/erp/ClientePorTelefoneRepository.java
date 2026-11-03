@@ -60,6 +60,25 @@ public class ClientePorTelefoneRepository {
         return brutos;
     }
 
+    /** Clientes (erp.people.id) que usam o telefone, com ou sem contrato com autenticacao. */
+    @Transactional(readOnly = true, transactionManager = "erpTransactionManager")
+    @SuppressWarnings("unchecked")
+    public List<Long> clientesPorVariantes(Collection<String> variantes) {
+        StringBuilder where = new StringBuilder();
+        for (String coluna : colunas) {
+            if (where.length() > 0) {
+                where.append(" OR ");
+            }
+            where.append("RIGHT(regexp_replace(COALESCE(p.").append(coluna)
+                    .append("::text, ''), '\\D', '', 'g'), 11) IN (:variantes)");
+        }
+        List<Object> linhas = entityManager.createNativeQuery(
+                        "SELECT DISTINCT p.id FROM erp.people p WHERE " + where + " ORDER BY p.id")
+                .setParameter("variantes", variantes)
+                .getResultList();
+        return linhas.stream().map(o -> ((Number) o).longValue()).toList();
+    }
+
     @Transactional(readOnly = true, transactionManager = "erpTransactionManager")
     @SuppressWarnings("unchecked")
     public List<ClienteContrato> buscarPorVariantes(Collection<String> variantes) {

@@ -25,34 +25,43 @@ import java.util.Optional;
 @Slf4j
 public class ClienteMassivaPorTelefoneService {
 
-    private final ClientePorTelefoneRepository clientePorTelefoneRepository;
+    private final ClientePorTelefoneRepository clienteRepository;
     private final AffectedUserService affectedUserService;
 
     private final int limiteClientesPorTelefone;
     private final AutoIspService autoIspService;
     private final HistoricoMassivaService historicoService;
     private final PerfilClienteService perfilService;
+    private final SituacaoErpService situacaoErp;
 
-    public ClienteMassivaPorTelefoneService(ClientePorTelefoneRepository clientePorTelefoneRepository,
+    public ClienteMassivaPorTelefoneService(ClientePorTelefoneRepository clienteRepository,
                                             AffectedUserService affectedUserService,
                                             @Value("${matrix.telefone.max-clientes:5}") int limiteClientesPorTelefone,
                                             AutoIspService autoIspService,
                                             HistoricoMassivaService historicoService,
-                                            PerfilClienteService perfilService) {
-        this.clientePorTelefoneRepository = clientePorTelefoneRepository;
+                                            PerfilClienteService perfilService,
+                                            SituacaoErpService situacaoErp) {
+        this.clienteRepository = clienteRepository;
         this.affectedUserService = affectedUserService;
         this.limiteClientesPorTelefone = limiteClientesPorTelefone;
         this.autoIspService = autoIspService;
         this.historicoService = historicoService;
         this.perfilService = perfilService;
+        this.situacaoErp = situacaoErp;
     }
 
     public ClienteMassivaPorTelefoneOutputDTO consultar(String telefone) {
         var variantes = TelefoneBrasil.variantes(telefone);
         String mascarado = TelefoneBrasil.mascarar(telefone);
 
-        List<ClienteContrato> vinculos = clientePorTelefoneRepository.buscarPorVariantes(variantes);
+        List<ClienteContrato> vinculos = clienteRepository.buscarPorVariantes(variantes);
         if (vinculos.isEmpty()) {
+            // Sem contrato com conexao (ex.: cliente so com contratos cancelados): o ERP ainda tem o que dizer.
+            var clientes = clienteRepository.clientesPorVariantes(variantes);
+            if (clientes.size() == 1) { // com mais de um cliente o telefone nao diz de quem e o contrato
+                log.info("Telefone {} so em cliente(s) sem contrato com conexao ({})", mascarado, clientes.size());
+                return semConexao(clientes, ClienteMassivaPorTelefoneOutputDTO.builder().telefone(mascarado));
+            }
             log.info("Telefone {} sem cliente com contrato no ERP", mascarado);
             return ClienteMassivaPorTelefoneOutputDTO.builder()
                     .status(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_NAO_ENCONTRADO)
@@ -71,9 +80,11 @@ public class ClienteMassivaPorTelefoneService {
                     .clientesEncontrados(clientes)
                     .build();
         }
+        // Telefone de mais de um cliente nao diz de quem e o contrato bloqueado: sem bloco do ERP (a confirmacao
+        // do CPF/CNPJ pelo atendente resolve, como no historico).
         return avaliarMassiva(vinculos, ClienteMassivaPorTelefoneOutputDTO.builder()
                 .telefone(mascarado)
-                .clientesEncontrados(clientes));
+                .clientesEncontrados(clientes), clientes == 1);
     }
 
     /**
@@ -81,7 +92,7 @@ public class ClienteMassivaPorTelefoneService {
      * identifica a consulta (telefone ou documento mascarado e quantidade de clientes).
      */
     ClienteMassivaPorTelefoneOutputDTO avaliarMassiva(List<ClienteContrato> vinculos,
-            ClienteMassivaPorTelefoneOutputDTO.ClienteMassivaPorTelefoneOutputDTOBuilder base) {
+            ClienteMassivaPorTelefoneOutputDTO.ClienteMassivaPorTelefoneOutputDTOBuilder base, boolean mostrarErp) {
         List<ContratoMassiva> emMassiva = vinculos.stream()
                 .map(this::massivaDoContrato)
                 .flatMap(Optional::stream)
@@ -90,11 +101,14 @@ public class ClienteMassivaPorTelefoneService {
         log.info("{} contrato(s) consultados, {} em massiva", vinculos.size(), emMassiva.size());
 
         var contratos = vinculos.stream().map(ClienteContrato::contratoId).distinct().toList();
+        var clienteIds = vinculos.stream().map(ClienteContrato::clienteId).distinct().toList();
         var autoisp = autoIspService.situacao(contratos);
         boolean emAutoisp = autoisp != null && autoisp.getEventos() != null && !autoisp.getEventos().isEmpty();
         var saida = base.contratosConsultados(vinculos.size()).autoisp(autoisp).emAutoisp(emAutoisp)
                 .historico(historicoService.recentes(contratos)).historicoHoras(historicoService.horas())
-                .perfil(perfilService.perfil(vinculos));
+                .perfil(perfilService.perfil(vinculos))
+                .contratosSituacao(mostrarErp ? situacaoErp.situacaoContratos(clienteIds) : null)
+                .protocolosErp(mostrarErp ? situacaoErp.protocolosAbertos(clienteIds) : null);
         if (emMassiva.isEmpty()) {
             return saida.status(ClienteMassivaPorTelefoneOutputDTO.SEM_MASSIVA).build();
         }
@@ -107,6 +121,19 @@ public class ClienteMassivaPorTelefoneService {
                 .previsaoVencida(menor.getPrevisaoVencida())
                 .motivo(menor.getMotivo())
                 .contratosEmMassiva(emMassiva)
+                .build();
+    }
+
+    /**
+     * Cliente que existe no ERP mas nao tem contrato com conexao: nao ha massiva a avaliar, mas o atendente ainda
+     * precisa saber se o contrato esta cancelado e se ha protocolo aberto. Compartilhado com a busca por documento.
+     */
+    ClienteMassivaPorTelefoneOutputDTO semConexao(List<Long> clienteIds,
+            ClienteMassivaPorTelefoneOutputDTO.ClienteMassivaPorTelefoneOutputDTOBuilder base) {
+        return base.status(ClienteMassivaPorTelefoneOutputDTO.CLIENTE_SEM_CONEXAO)
+                .clientesEncontrados(clienteIds.size())
+                .contratosSituacao(situacaoErp.situacaoContratos(clienteIds))
+                .protocolosErp(situacaoErp.protocolosAbertos(clienteIds))
                 .build();
     }
 

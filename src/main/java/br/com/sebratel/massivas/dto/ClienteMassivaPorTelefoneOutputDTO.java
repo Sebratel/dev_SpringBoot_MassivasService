@@ -21,6 +21,8 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     public static final String CLIENTE_NAO_ENCONTRADO = "cliente_nao_encontrado";
     /** Telefone em cadastro de muitos clientes (ex.: o da propria empresa): nao identifica quem ligou. */
     public static final String TELEFONE_COMPARTILHADO = "telefone_compartilhado";
+    /** Cliente existe no ERP mas nenhum contrato dele tem conexao (ex.: so contratos cancelados): sem massiva a avaliar. */
+    public static final String CLIENTE_SEM_CONEXAO = "cliente_sem_conexao";
 
     /** em_massiva, sem_massiva, cliente_nao_encontrado ou telefone_compartilhado. */
     @JsonProperty("status")
@@ -78,6 +80,14 @@ public class ClienteMassivaPorTelefoneOutputDTO {
     /** Cadastro (people/contratos/telefones) e participacao em massivas, para o resumo de recorrencia. */
     @JsonProperty("perfil")
     private PerfilClienteDTO perfil;
+
+    /** Contratos bloqueados, suspensos ou cancelados; ausente se o ERP nao foi consultado. */
+    @JsonProperty("contratos_situacao")
+    private ContratosSituacaoDTO contratosSituacao;
+
+    /** Protocolos, OS e visitas abertos do cliente no ERP; ausente se o ERP nao foi consultado. */
+    @JsonProperty("protocolos_erp")
+    private ProtocolosErpDTO protocolosErp;
 
     @JsonProperty("motivo")
     private String motivo;
